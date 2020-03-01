@@ -8,20 +8,32 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 sns.set_style('whitegrid')
+from sklearn.model_selection import train_test_split
 
 # # # # # # # # # # # # #
 # Extract: - Write to MongoDB?
 # # # # # # # # # # # # #
 
-# Get stock prices:
+# 1. Get stock prices:
 # -- SPX
 spx_df = fns.alpha_v_to_df(fns.get_data_alpha_v2("SPX"))
+
+
+spx_validate = spx_df[0:int(len(spx_df)*0.10)]
+spx_df_test_train = spx_df[int(len(spx_df)*0.10):]
+# ---- SPLIT DATA: Train (65%), test (25%), validate (10%)
+
+X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.3, random_state=42)
+
+
 # -- DJIA
 djia_df = fns.alpha_v_to_df(fns.get_data_alpha_v2("DJIA"))
-# -- Combine into 1 DF
-combined_df = pd.DataFrame(spx_df.append(djia_df)) #date: yyyy-mm-dd
 
-# Get Trump Tweets:
+
+# ---- SPLIT DATA: Train (65%), test (25%), validate (10%)
+
+
+# 2. Get Trump Tweets:
 # -- Includes RTs
 trump_df_all = fns.get_json_data_to_df(fns.get_trump_json_data(r"C:\Users\btier\Documents\trump_tweets.json"))
 potus_df_all = fns.get_json_data_to_df(fns.get_trump_json_data(r"C:\Users\btier\Documents\potus_tweets.json"))
@@ -31,6 +43,10 @@ trump_df_nort = fns.get_json_data_to_df(fns.get_trump_json_data(r"C:\Users\btier
 # # # # # # # # # # # # #
 # Explore Data:
 # # # # # # # # # # # # #
+
+# Stock timeseries:
+
+
 
 # Trump twitter data:
 # -- Clean: Cleans trump_df_all['text'] column to 'processed text'
@@ -42,22 +58,39 @@ word_cloud = fns.get_wordcloud(trump_df_clean, r"C:\Users\btier\Documents\trump_
 # ----- Excludes top 3 (https, tco, rt)
 top_words = fns.get_top_words(trump_df_clean)
 
-# -- Sentiment: Add sentiment to
+# -- Sentiment: Add sentiment to trump_df_clean
 trump_df_clean = fns.get_sentiment_pa(trump_df_clean)
 
 
+# Join combined stock price data:
+merged_data = pd.merge(trump_df_clean, combined_df, on = "DATE", how = "left")
+merged_data = pd.DataFrame(merged_data)
+merged_data.drop_duplicates()
+
+merged_data.to_csv(r"C:\Users\btier\Documents\sCOMBINED.csv", sep=',',index=False)
 
 
 
 
 
-
-
-
-# trump_df_clean.to_csv(r"C:\Users\btier\Documents\sentiment_trump.csv", sep=',')
+trump_df_clean.to_csv(r"C:\Users\btier\Documents\sentiment_trump.csv", sep=',')
 # fns.get_sentiment_nbayes(trump_df_clean)
 
 # Stock price data:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 '''
