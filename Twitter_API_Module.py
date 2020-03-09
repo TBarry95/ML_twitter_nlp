@@ -1,6 +1,7 @@
 # Credit to LucidProgramming:
 # --- Youtube: https://www.youtube.com/watch?v=wlnx-7cm4Gg&t=223s
-
+from PyQt5.QtSensors import qoutputrange
+from rx.linq.observable import count
 from tweepy.streaming import StreamListener
 from tweepy import API
 from tweepy import Cursor
@@ -9,6 +10,9 @@ from tweepy import Stream
 import twitter_credentials
 import pandas as pd
 import numpy as np
+from textblob import TextBlob
+import re
+
 
 # --- TWITTER_CLIENT --- #
 class TwitterClientClass(): #twitter_client_class
@@ -28,15 +32,22 @@ class TwitterClientClass(): #twitter_client_class
 
     def get_timeline_pages(self, num_of_pages):
         page_list = []
-        for i in Cursor(self.twitter_client.user_timeline, id = self.twit_user).pages(num_of_pages):
+        for i in Cursor(self.twitter_client.user_timeline, id = self.twit_user, tweet_mode='extended', wait_on_rate_limit=True).pages(num_of_pages):
             page_list.append(i)
         return page_list
 
     def get_home_tweets(self, num_of_tweets):
         tweet_list = []
-        for i in Cursor(self.twitter_client.home_timeline, id = self.twit_user).items(num_of_tweets):
+        for i in Cursor(self.twitter_client.home_timeline, id = self.twit_user, tweet_mode='extended').items(num_of_tweets):
             tweet_list.append(i)
         return tweet_list
+
+    def get_hashtag_tweets(self, num_of_tweets, hashtag):
+        tweet_list = []
+        for i in Cursor(self.twitter_client.search, q = hashtag, lang = "en").items(num_of_tweets):
+            tweet_list.append(i)
+            return(tweet_list)
+
 
 # -- TWITTER_AUTHENTICATOR -- #
 class TwitterAuthenticator(): #twitter_auth
@@ -87,6 +98,19 @@ class TwitterListenerClass(StreamListener): #twitter_listener
 
 # -- TWITTER_ANALYSER -- #
 class AnalyseTweetsClass(): #analyse_tweets
+
+    def clean_tweet(self, tweet):
+        cleaned_tweet = ' '.join(re.sub("(@[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+:\/\/\S+)", " ", tweet).split())
+        return cleaned_tweet
+
+    def sentiment_analyser(self, tweet):
+        analysis = TextBlob(self.clean_tweet(tweet))
+        if analysis.sentiment.polarity > 0:
+            return 1
+        elif analysis.sentiment.polarity == 0:
+            return 0
+        elif analysis.sentiment.polarity < 0:
+            return -1
 
     def dataframe_tweets(self, tweets):
         list_ids = np.array([i.id for i in tweets])
