@@ -12,23 +12,13 @@ import pandas as pd
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
+from matplotlib import pyplot as plt
 
 # # # # # # # # # # # # #
 # Extract:
 # # # # # # # # # # # # #
 
 # 1. Get stock prices: SPX / GSPC
-'''
-
-# -- SPX: Dependent variable
-# spx_df = fns.alpha_v_to_df(fns.get_data_alpha_v2("SPX"))
-# spx_target = spx_df['SPX_CLOSE_PRICE'].shift(-1) # get dependent variable (-1 = predict 1 day ahead, etc)
-
-# spx_validate = spx_df[0:int(len(spx_df)*0.10)]
-# spx_target_validate = spx_target[0:int(len(spx_df)*0.10)]
-# spx_df_test_train = spx_df[int(len(spx_df)*0.10):] # this to be split between test and train
-# spx_target_test_train = spx_target[int(len(spx_df)*0.10):]'''
-
 gspc_df = pd.read_csv(r"C:\Users\btier\Downloads\^GSPC.csv")
 gspc_df.columns = ['DATE', 'GSPC_OPEN', 'GSPC_HIGH', 'GSPC_LOW', 'GSPC_CLOSE', 'GSPC_ADJ_CLOSE', 'GSPC_VOL']
 
@@ -120,7 +110,7 @@ all_data = pd.merge(all_data, gspc_df, how='left', left_on='DATE', right_on='DAT
 # # # # # # # # # # # # #
 
 # 1. Check data: null values
-msno.matrix(all_data, )
+msno.matrix(all_data, figsize= (50,30))
 
 # Reduce - eg. 1 gold, 1 silver, etc..
 new_data = pd.DataFrame({"DATE": all_data['DATE'],
@@ -172,7 +162,7 @@ new_data_reduce3 = pd.DataFrame({"DATE": new_data_reduce2['DATE'],
 
 # 4. Check data: clean dataset:
 msno.matrix(new_data_reduce3)
-# sns.heatmap(new_data_reduce3.isnull(), cbar=False)
+sns.heatmap(new_data_reduce3.isnull(), cbar=False)
 
 # Split data:
 # -- Seperate dependent and ind variable
@@ -190,20 +180,57 @@ gspc_px_test_train = gspc_px[:int(len(gspc_px)*0.9)]
 
 data_train, data_test, gspc_px_train, gspc_px_test = train_test_split(data_test_train, gspc_px_test_train, test_size=0.3, random_state=0)
 
-data_train = StandardScaler().fit_transform(data_train)
-data_test = StandardScaler().fit_transform(data_test)
+data_train_fit = StandardScaler().fit_transform(data_train)
+data_test_fit = StandardScaler().fit_transform(data_test)
 
 pca = PCA()
 data_train_pca = pca.fit_transform(data_train)
 data_test_pca = pca.fit_transform(data_test)
-
 exp_var = pca.explained_variance_ratio_
 
 # test with 1 PC
 pca = PCA(n_components=1)
-data_train = pca.fit_transform(data_train)
-data_test = pca.fit_transform(data_test)
+data_train1 = pca.fit_transform(data_train)
+data_test1 = pca.fit_transform(data_test)
+exp_var1 = pca.explained_variance_ratio_
 
+# test with 2 PC
+pca = PCA(n_components=2)
+data_train2 = pca.fit_transform(data_train)
+data_test2 = pca.fit_transform(data_test)
+exp_var2 = pca.explained_variance_ratio_
 
+# test with 3 PC
+pca = PCA(n_components=3)
+data_train3 = pca.fit_transform(data_train)
+data_test3 = pca.fit_transform(data_test)
+exp_var3 = pca.explained_variance_ratio_
+
+# test with 4 PC
+pca = PCA(n_components=4)
+data_train4 = pca.fit_transform(data_train)
+data_test4 = pca.fit_transform(data_test)
+exp_var4 = pca.explained_variance_ratio_
+
+pc_df4 = pd.DataFrame(data_train4, columns = ['PC_1', 'PC_2', 'PC_3', 'PC_4'])
+pc_df2 = pd.DataFrame(data_train2, columns = ['PC_1', 'PC_2'])
+
+tst = pd.DataFrame({"PC1": pc_df2['PC_1'], "PC2": pc_df2['PC_2'], "PX": gspc_px_train})
+
+fig = plt.figure(figsize = (8,8))
+ax = fig.add_subplot(1,1,1)
+ax.set_xlabel('Principal Component 1', fontsize = 15)
+ax.set_ylabel('Principal Component 2', fontsize = 15)
+ax.set_title('2 component PCA', fontsize = 20)
+targets = ['Iris-setosa', 'Iris-versicolor', 'Iris-virginica']
+colors = ['r', 'g', 'b']
+for target, color in zip(targets,colors):
+    indicesToKeep = finalDf['target'] == target
+    ax.scatter(finalDf.loc[indicesToKeep, 'principal component 1']
+               , finalDf.loc[indicesToKeep, 'principal component 2']
+               , c = color
+               , s = 50)
+ax.legend(targets)
+ax.grid()
 
 

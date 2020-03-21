@@ -23,6 +23,7 @@ from sklearn.decomposition import LatentDirichletAllocation as LDA
 from sklearn.feature_extraction.text import CountVectorizer
 #%%time
 from pyLDAvis import sklearn as sklearn_lda
+from sklearn.cluster import KMeans
 import pickle
 import pyLDAvis
 import os
@@ -79,8 +80,6 @@ def get_data_alphav_intraday(ticker):
     ts = TimeSeries(key=api_key, output_format='json')
     raw_price_data, meta_data = ts.get_intraday(symbol=ticker, interval="60min")
     return [raw_price_data, meta_data]
-
-p = get_data_alphav_intraday("SPX")
 
 def alpha_v_to_df(ticker_dict):
     dates = [x[0] for x in ticker_dict[0].items()]
@@ -216,6 +215,17 @@ def lda_vis(df_all_tweets, num_topics):
         LDAvis_prepared = pickle.load(f)
     return pyLDAvis.save_html(LDAvis_prepared, './ldavis_prepared_' + str(num_topics) + '.html')
 
+def elbow_graph(list, df_all_tweets):
+    num_cluster = [i for i in list]
+    inertia = []
+    count_data = count_vectorizer.fit_transform(df_all_tweets['PROCESSED_TEXT'])
+    for i in list:
+        km = KMeans(i).fit(count_data)
+        inertia.append(km.inertia_)
+    return pd.DataFrame({"CLUSTERS": num_cluster, "DISTORTION": inertia})
+
+#clusters_num =  elbow_graph([100,200,400,600,800,1000,1300,1600,1900,2400,2800], df_all_tweets)
+
 def clean_text_words1(trump_df):
     # trump_df_cln = trump_df.drop(
     #     columns=['source', 'created_at', 'retweet_count', 'favorite_count', 'is_retweet', 'id_str'], axis=1)
@@ -280,7 +290,7 @@ def tweet_date_format(trump_df_all):
 
 def get_wordcloud(trump_df_cln, filepath):
     make_string = ','.join(list(trump_df_cln['PROCESSED_TEXT'].values))
-    word_cloud_obj = WordCloud(background_color="white", max_words=5000, contour_width=2, contour_color='steelblue')
+    word_cloud_obj = WordCloud(background_color="white", width=550, height=550, max_words=100, contour_width=2, contour_color='steelblue')
     word_cloud_obj.generate(make_string)
     word_cloud_obj.to_file(filepath)
     return word_cloud_obj.generate(make_string)
