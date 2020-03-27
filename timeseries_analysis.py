@@ -1,118 +1,34 @@
-import quandl
-import functions_nlp as fns
-import pandas as pd
-import datetime
+# Des:
+# By:
+
+# Libraries and source scripts:
 import numpy as np
 from sklearn.model_selection import train_test_split
 import seaborn as sns
 import missingno as msno
-from yahoo_finance import Share
 import pandas as pd
 #warnings.simplefilter("ignore", DeprecationWarning)
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
+from sklearn import model_selection
 from matplotlib import pyplot as plt
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import scale
+from sklearn.metrics import *
+import functools
 
-# # # # # # # # # # # # #
-# Extract:
-# # # # # # # # # # # # #
+######################################################################################
+# Extract: Read in raw dataset as sourced from get_datasets.py
+######################################################################################
+all_data = pd.read_csv(r"C:\Users\btier\Documents\economic_data.csv")
 
-# 1. Get stock prices: SPX / GSPC
-gspc_df = pd.read_csv(r"C:\Users\btier\Downloads\^GSPC.csv")
-gspc_df.columns = ['DATE', 'GSPC_OPEN', 'GSPC_HIGH', 'GSPC_LOW', 'GSPC_CLOSE', 'GSPC_ADJ_CLOSE', 'GSPC_VOL']
-
-# 2. Get predictors:
-# -- GOLD:
-gold_df = fns.get_quandl('LBMA/GOLD')
-gold_df = gold_df.reset_index()
-gold_df.columns = ['DATE', 'GOLD_USD_AM', 'GOLD_USD_PM', 'GOLD_GBP_AM', 'GOLD_GBP_PM', 'GOLD_EURO_AM', 'GOLD_EURO_PM']
-
-# -- SILVER:
-silver_df = fns.get_quandl('LBMA/SILVER')
-silver_df = silver_df.reset_index()
-silver_df.columns = ['DATE', 'SILVER_PRICE_USD', 'SILVER_PRICE_GBP', 'SILVER_PRICE_EUR']
-
-# -- PLATINUM FUTURE:
-platinum_future_df = fns.get_quandl('CHRIS/CME_PL1')
-platinum_future_df = platinum_future_df.reset_index()
-platinum_future_df.columns = ['DATE', 'PLAT_OPEN_USD', 'PLAT_HIGH_USD', 'PLAT_LOW_USD', 'PLAT_LAST_USD', 'PLAT_CHANGE', 'PLAT_SETTLE', 'PLAT_VOL', 'PLAT_PREV_DAY_OP_INT']
-
-# -- PETROLEUM BASKET:
-opec_basket = fns.get_quandl('OPEC/ORB') # OPEC Reference Basket
-opec_basket = opec_basket.reset_index()
-opec_basket.columns = ['DATE', 'OPEC_BSK_PRICE']
-
-# -- NATURAL GAS:
-natural_gas = fns.get_quandl('CHRIS/CME_NG1')
-natural_gas = natural_gas.reset_index()
-natural_gas.columns = ['DATE', 'GAS_OPEN_USD', 'GAS_HIGH_USD', 'GAS_LOW_USD', 'GAS_LAST_USD', 'GAS_CHANGE', 'GAS_SETTLE', 'GAS_VOL', 'GAS_PREV_DAY_OP_INT']
-
-# -- EFFECTIVE FED FUND RATE DAILY :
-interest_rates_daily = fns.get_quandl("FRED/DFF")
-interest_rates_daily = interest_rates_daily.reset_index()
-interest_rates_daily.columns = ['DATE', 'FED_FUND_RATE']
-
-# -- 30-Year Treasury Constant Maturity Rate
-treasury_30yr = fns.get_quandl("FRED/DGS30")
-treasury_30yr = treasury_30yr.reset_index()
-treasury_30yr.columns = ['DATE', '30YR_TRES_RATE']
-
-# -- US GDP:
-gdp_df = fns.get_quandl("FRED/GDP")
-gdp_df = gdp_df.reset_index()
-gdp_df.columns = ['DATE', 'GDP_USD_BILLION']
-
-# -- USD/GBP:
-usdgbp_df = fns.get_quandl("BOE/XUDLGBD")
-usdgbp_df = usdgbp_df.reset_index()
-usdgbp_df.columns = ['DATE', 'USD_GBP']
-
-# -- Historical Housing Market Data - Real Building Cost Index
-building_cost = fns.get_quandl("YALE/RBCI")
-building_cost = building_cost.reset_index()
-building_cost.columns = ['DATE', 'BUILD_COST_INX', 'US_POP_MILL', 'LONG_RATE']
-
-# -- Stock Market Confidence Indices - United States Valuation Index Data - Institutional
-confidence_inx_inst = fns.get_quandl("YALE/US_CONF_INDEX_VAL_INST")
-confidence_inx_inst = confidence_inx_inst.reset_index()
-confidence_inx_inst.columns = ['DATE', 'CONF_INX_INST', 'CONF_INX_ERROR']
-
-# -- Stock Market Confidence Indices - United States Valuation Index Data - Institutional
-confidence_inx_inst = fns.get_quandl("YALE/US_CONF_INDEX_VAL_INST")
-confidence_inx_inst = confidence_inx_inst.reset_index()
-confidence_inx_inst.columns = ['DATE', 'CONF_INX_INST', 'CONF_INX_ERROR']
-
-# -- Historical Housing Market Data - Real Home Price Index
-house_price = fns.get_quandl("YALE/RHPI")
-house_price = house_price.reset_index()
-house_price.columns = ['DATE', 'HOUSE_PX_INX_REAL']
-
-# -- MERGE DATASETS:
-all_data = pd.merge(gold_df, silver_df, how='left', left_on='DATE', right_on='DATE')
-all_data = pd.merge(all_data, platinum_future_df, how='left', left_on='DATE', right_on='DATE')
-all_data = pd.merge(all_data, opec_basket, how='left', left_on='DATE', right_on='DATE')
-all_data = pd.merge(all_data, natural_gas, how='left', left_on='DATE', right_on='DATE')
-all_data = pd.merge(all_data, interest_rates_daily, how='left', left_on='DATE', right_on='DATE')
-all_data = pd.merge(all_data, treasury_30yr, how='left', left_on='DATE', right_on='DATE')
-all_data = pd.merge(all_data, gdp_df, how='left', left_on='DATE', right_on='DATE')
-all_data = pd.merge(all_data, usdgbp_df, how='left', left_on='DATE', right_on='DATE')
-all_data = pd.merge(all_data, building_cost, how='left', left_on='DATE', right_on='DATE')
-all_data = pd.merge(all_data, confidence_inx_inst, how='left', left_on='DATE', right_on='DATE')
-all_data = pd.merge(all_data, house_price, how='left', left_on='DATE', right_on='DATE')
-all_data['DATE'] = [str(i)[0:10] for i in all_data['DATE']]
-all_data = pd.merge(all_data, gspc_df, how='left', left_on='DATE', right_on='DATE')
-
-#all_data.to_csv(r"C:\Users\btier\Documents\economic_data.csv")
-
-# # # # # # # # # # # # #
-# Transform:
-# # # # # # # # # # # # #
+######################################################################################
+# Transform: Clean data and prepare for analysis
+######################################################################################
 
 # 1. Check data: null values
 msno.matrix(all_data, figsize= (50,30))
 
-# Reduce - eg. 1 gold, 1 silver, etc..
+# Reduce columns - eg. 1 gold, 1 silver, etc..
 new_data = pd.DataFrame({"DATE": all_data['DATE'],
                          "GOLD_USD_AM": all_data['GOLD_USD_AM'],
                          "SILVER_PRICE_USD": all_data['SILVER_PRICE_USD'],
@@ -122,7 +38,9 @@ new_data = pd.DataFrame({"DATE": all_data['DATE'],
                          "BUILD_COST_INX": all_data['BUILD_COST_INX'],
                          "US_POP_MILL": all_data["US_POP_MILL"],
                          "CONF_INX_INST": all_data["CONF_INX_INST"],
+                         "CONF_INX_INDV": all_data["CONF_INX_INDV"],
                          "HOUSE_PX_INX_REAL": all_data["HOUSE_PX_INX_REAL"],
+                         "GSPC_VOL": all_data['GSPC_VOL'],
                          "GSPC_CLOSE": all_data['GSPC_CLOSE']})
 
 # 2. Check data: null values
@@ -144,8 +62,13 @@ new_data_reduce2 = pd.DataFrame({"DATE": new_data_reduce1['DATE'],
                          "BUILD_COST_INX": new_data_reduce1['BUILD_COST_INX'].fillna(method='ffill'),
                          "US_POP_MILL": new_data_reduce1["US_POP_MILL"].fillna(method='ffill'),
                          "CONF_INX_INST": new_data_reduce1["CONF_INX_INST"].fillna(method='ffill'),
+                         "CONF_INX_INDV": new_data_reduce1["CONF_INX_INDV"].fillna(method='ffill'),
                          "HOUSE_PX_INX_REAL": new_data_reduce1["HOUSE_PX_INX_REAL"].fillna(method='ffill'),
+                         "GSPC_VOL": new_data_reduce1['GSPC_VOL'].fillna(method='ffill'),
                          "GSPC_CLOSE": new_data_reduce1['GSPC_CLOSE'].fillna(method='ffill')})
+
+# 4. Check data: null values
+msno.matrix(new_data_reduce2)
 
 # Impute values: Back fill: - CONF_INX_INST, BUILD_COST_INX, US_POP_MILL
 new_data_reduce3 = pd.DataFrame({"DATE": new_data_reduce2['DATE'],
@@ -157,80 +80,209 @@ new_data_reduce3 = pd.DataFrame({"DATE": new_data_reduce2['DATE'],
                          "BUILD_COST_INX": new_data_reduce2['BUILD_COST_INX'].fillna(method='bfill'),
                          "US_POP_MILL": new_data_reduce2["US_POP_MILL"].fillna(method='bfill'),
                          "CONF_INX_INST": new_data_reduce2["CONF_INX_INST"].fillna(method='bfill'),
+                         "CONF_INX_INDV": new_data_reduce2["CONF_INX_INDV"].fillna(method='bfill'),
                          "HOUSE_PX_INX_REAL": new_data_reduce2["HOUSE_PX_INX_REAL"].fillna(method='bfill'),
+                         "GSPC_VOL": new_data_reduce2['GSPC_VOL'],
                          "GSPC_CLOSE": new_data_reduce2['GSPC_CLOSE']})
 
-# 4. Check data: clean dataset:
+# 5. Check data: clean dataset:
 msno.matrix(new_data_reduce3)
 sns.heatmap(new_data_reduce3.isnull(), cbar=False)
 
-# Split data:
-# -- Seperate dependent and ind variable
+new_data_reduce3.to_csv(r"C:\Users\btier\Documents\new_data_reduce3.csv", index=False)
+
+######################################################################################
+# Analysis: Regression - 1. PCA, 2. PCR, 3. Best Subsets Regression
+######################################################################################
+
+#########################################################
+# 1. PCA: Principal Component Analysis: On training data
+#########################################################
+
+# -- Seperate dependent and independent variables
 gspc_px = new_data_reduce3['GSPC_CLOSE']
 del new_data_reduce3['GSPC_CLOSE']
+
+# -- Set date as index, so that it can easily be reapplied once removed
+new_data_reduce3 = new_data_reduce3.set_index(new_data_reduce3['DATE'])
 del new_data_reduce3['DATE']
+#del new_data_reduce3['GSPC_VOL']
 
-#  -- Validation: Keeping for last - never tested on
-validation_data = new_data_reduce3[int(len(new_data_reduce3)*0.9):]
-validation_gspc_px = gspc_px[int(len(gspc_px)*0.9):]
+# -- Initialise PCA class
+pca2 = PCA()
 
-#  -- test / train on:
-data_test_train = new_data_reduce3[:int(len(new_data_reduce3)*0.9)]
-gspc_px_test_train = gspc_px[:int(len(gspc_px)*0.9)]
+# -- Extract validation subset: Keeping for last - never tested on
+validation_data = new_data_reduce3[int(len(new_data_reduce3)*0.99):]
+validation_gspc_px = gspc_px[int(len(gspc_px)*0.99):]
 
-data_train, data_test, gspc_px_train, gspc_px_test = train_test_split(data_test_train, gspc_px_test_train, test_size=0.3, random_state=0)
+# -- Test / Train split:
+non_validation_data = new_data_reduce3[:int(len(new_data_reduce3)*0.99)]
+non_validation_gspc = gspc_px[:int(len(gspc_px)*0.99)]
+data_train, data_test, gspc_px_train, gspc_px_test = train_test_split(non_validation_data, non_validation_gspc, test_size=0.3, random_state=0)
 
-data_train_fit = StandardScaler().fit_transform(data_train)
-data_test_fit = StandardScaler().fit_transform(data_test)
+# -- Standardise/scale the training data such that each column's mean = 0
+data_reduced_train = pca2.fit_transform(scale(data_train))
+print(pd.DataFrame(pca2.components_.T).head())
 
-pca = PCA()
-data_train_pca = pca.fit_transform(data_train)
-data_test_pca = pca.fit_transform(data_test)
-exp_var = pca.explained_variance_ratio_
+# -- Find optimal number of components by applying k-fold Cross Validation
+kfold_cv_10_2 = model_selection.KFold(n_splits=10, random_state=0, shuffle=True)
 
-# test with 1 PC
-pca = PCA(n_components=1)
-data_train1 = pca.fit_transform(data_train)
-data_test1 = pca.fit_transform(data_test)
-exp_var1 = pca.explained_variance_ratio_
+# -- Initialise LR model
+lr_model_2 = LinearRegression()
 
-# test with 2 PC
-pca = PCA(n_components=2)
-data_train2 = pca.fit_transform(data_train)
-data_test2 = pca.fit_transform(data_test)
-exp_var2 = pca.explained_variance_ratio_
+# -- Use MSE as an indicator for closest fit:
+mse_pca_2 = []
 
-# test with 3 PC
-pca = PCA(n_components=3)
-data_train3 = pca.fit_transform(data_train)
-data_test3 = pca.fit_transform(data_test)
-exp_var3 = pca.explained_variance_ratio_
+# -- Looping through X number of PC's, appends the MSE to above list. Will be used to find best model.
+for i in np.arange(1, 11):
+    # Multiple by -1 to negate the scoring method
+    mse_result = -1 * model_selection.cross_val_score(lr_model_2, data_reduced_train[:, :i], gspc_px_train.ravel(),
+                                                      cv=kfold_cv_10_2,scoring='neg_mean_squared_error').mean()
+    mse_pca_2.append(mse_result)
 
-# test with 4 PC
-pca = PCA(n_components=4)
-data_train4 = pca.fit_transform(data_train)
-data_test4 = pca.fit_transform(data_test)
-exp_var4 = pca.explained_variance_ratio_
+# -- Plot elbow graph of MSE
+plt.figure()
+plt.plot(mse_pca_2, '-v')
+plt.xlabel('Principal Components in Linear Regression Model')
+plt.ylabel('MSE - Mean Squared Error')
+plt.title('Elbow Chart - PCA K-Fold Cross Validation (Training)')
 
-pc_df4 = pd.DataFrame(data_train4, columns = ['PC_1', 'PC_2', 'PC_3', 'PC_4'])
-pc_df2 = pd.DataFrame(data_train2, columns = ['PC_1', 'PC_2'])
+# -- Plot elbow graph of variance
+variance_explained_2 = np.cumsum(np.round(pca2.explained_variance_ratio_, decimals=4)*100)
+plt.figure()
+plt.plot(variance_explained_2)
+plt.xlabel('Principal Components in Linear Regression Model')
+plt.ylabel('% Variance Explained')
+plt.title('Elbow Chart - Variance Explained by Principal Component')
 
-tst = pd.DataFrame({"PC1": pc_df2['PC_1'], "PC2": pc_df2['PC_2'], "PX": gspc_px_train})
+#########################################################
+# 2. PCR: Principal Component Regression: Train and test LR model based on PCA.
+#########################################################
 
-fig = plt.figure(figsize = (8,8))
-ax = fig.add_subplot(1,1,1)
-ax.set_xlabel('Principal Component 1', fontsize = 15)
-ax.set_ylabel('Principal Component 2', fontsize = 15)
-ax.set_title('2 component PCA', fontsize = 20)
-targets = ['Iris-setosa', 'Iris-versicolor', 'Iris-virginica']
-colors = ['r', 'g', 'b']
-for target, color in zip(targets,colors):
-    indicesToKeep = finalDf['target'] == target
-    ax.scatter(finalDf.loc[indicesToKeep, 'principal component 1']
-               , finalDf.loc[indicesToKeep, 'principal component 2']
-               , c = color
-               , s = 50)
-ax.legend(targets)
-ax.grid()
+# -- Standardise/scale the test data such that each column's mean = 0
+data_reduced_test = pca2.fit_transform(scale(data_test))
+print(pd.DataFrame(pca2.components_.T).head())
+
+# -- Initialise LR model
+lr_model_run_2 = LinearRegression()
+
+# -- Fit LR model: 6 PC's based on Elbow graph
+lr_model_run_2.fit(data_reduced_train[:,:6], gspc_px_train)
+
+# -- Run model:
+predictions_2 = lr_model_run_2.predict(data_reduced_test[:,:6])
+
+# -- Find Metrics and Visualise:
+mse_pred_2 = mean_squared_error(gspc_px_test, predictions_2)
+mae_pred_2 = mean_absolute_error(gspc_px_test, predictions_2)
+rmse_pred_2 = np.sqrt(mse_pred_2)
+r2 = r2_score(gspc_px_test, predictions_2)
+median_ae = median_absolute_error(gspc_px_test, predictions_2)
+
+print('Mean Squared Error:', mse_pred_2)
+print('Mean Absolute Error:', mae_pred_2)
+print('Root Mean Squared Error:', rmse_pred_2)
+print('R-Squared:', r2)
+print('Median Absolute Error:', median_ae)
+
+metrics = pd.DataFrame([mse_pred_2, mae_pred_2, rmse_pred_2])
+metrics.plot(kind = 'bar')
+
+# -- Print Equation:
+intercept = lr_model_run_2.intercept_
+coefs = lr_model_run_2.coef_
+pc = ['PC1', 'PC2', 'PC3', 'PC4', 'PC5', 'PC6']
+print("Regression Equation 6 PC's: ", round(intercept), '+ (', pc[0],round(coefs[0]), ') + (' ,pc[1],round(coefs[1]), ') + (', pc[2],round(coefs[2]),
+      ') + (' ,pc[3],round(coefs[3]), ') + (', pc[4],round(coefs[4]), ') + (' ,pc[5],round(coefs[5]), ')')
+
+# -- Compare results in table format:
+df_compare = pd.DataFrame({'ACTUAL_PRICE': gspc_px_test, 'PREDICTED_PRICE': predictions_2.flatten()})
+print(df_compare.head(30))
+
+# -- Run PCR on Validation dataset:
+data_reduced_validation = pca2.fit_transform(scale(validation_data))
+print(pd.DataFrame(pca2.components_.T).head())
+
+# -- Fit LR model: 6 PC's based on Elbow graph
+lr_model_run_2.fit(data_reduced_validation[:,:6], validation_gspc_px)
+
+# -- Run model:
+predictions_3 = lr_model_run_2.predict(data_reduced_validation[:,:6])
+
+# -- Find Metrics and Visualise:
+mse_pred_3 = mean_squared_error(validation_gspc_px, predictions_3)
+mae_pred_3 = mean_absolute_error(validation_gspc_px, predictions_3)
+rmse_pred_3 = np.sqrt(mse_pred_3)
+r2_3 = r2_score(validation_gspc_px, predictions_3)
+median_ae_3 = median_absolute_error(validation_gspc_px, predictions_3)
+
+print('Mean Squared Error:', mse_pred_3)
+print('Mean Absolute Error:', mae_pred_3)
+print('Root Mean Squared Error:', rmse_pred_3)
+print('R-Squared:', r2_3)
+print('Median Absolute Error:', median_ae_3)
+
+# -- Compare results in table format:
+df_compare_validation = pd.DataFrame({'ACTUAL_PRICE': validation_gspc_px, 'PREDICTED_PRICE': predictions_3.flatten()})
+print(df_compare_validation.head(30))
+
+plt.figure()
+plot1, = plt.plot([i for i in range(0,len(df_compare_validation.index))], df_compare_validation['ACTUAL_PRICE'])
+plot2, = plt.plot([i for i in range(0,len(df_compare_validation.index))], df_compare_validation['PREDICTED_PRICE'])
+plt.xlabel('Prediction - Number of days')
+plt.ylabel('Price of S&P500')
+plt.title('Time Series - Compairson of Actual vs Predicted Prices')
+plt.legend((plot1, plot2), ('S&P500 - Actual', 'S&P500 - Predicted'))
+
+#########################################################
+# Best subsets Regression:
+#########################################################
+%matplotlib inline
+import pandas as pd
+import numpy as np
+import itertools
+import time
+import statsmodels.api as sm
+import matplotlib.pyplot as plt
+
+# -- Extract validation subset: Keeping for last - never tested on
+validation_data = new_data_reduce3[int(len(new_data_reduce3)*0.99):]
+validation_gspc_px = gspc_px[int(len(gspc_px)*0.99):]
+
+# -- Test / Train split:
+non_validation_data = new_data_reduce3[:int(len(new_data_reduce3)*0.99)]
+non_validation_gspc = gspc_px[:int(len(gspc_px)*0.99)]
+data_train, data_test, gspc_px_train, gspc_px_test = train_test_split(non_validation_data, non_validation_gspc, test_size=0.3, random_state=0)
+
+def process_subset(feature_set_list, y, X):
+    # Fit model on feature_set and calculate RSS
+    model = sm.OLS(y,X[list(feature_set_list)])
+    regr = model.fit()
+    RSS = ((regr.predict(X[list(feature_set_list)]) - y) ** 2).sum()
+    return {"model":regr, "RSS":RSS}
+
+def best_model_per_predictor(k, y, X):
+    tic = time.time()
+    results = []
+    for combo in itertools.combinations(X.columns, k):
+        results.append(process_subset(combo, y, X))
+    # Wrap everything up in a nice dataframe
+    models = pd.DataFrame(results)
+    # Choose the model with the highest RSS
+    best_model = models.loc[models['RSS'].argmin()]
+    toc = time.time()
+    print("Processed", models.shape[0], "models on", k, "predictors in", (toc - tic), "seconds.")
+    # Return the best model, along with some other useful information about the model
+    return best_model
+
+# Could take quite awhile to complete...
+models_best = pd.DataFrame(columns=["RSS", "model"])
+
+tic = time.time()
+for i in range(1,8):
+    models_best.loc[i] = best_model_per_predictor(i, gspc_px_test, data_train)
+
+toc = time.time()
+print("Total elapsed time:", (toc-tic), "seconds.")
 
 
