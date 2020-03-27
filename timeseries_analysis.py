@@ -237,13 +237,14 @@ plt.legend((plot1, plot2), ('S&P500 - Actual', 'S&P500 - Predicted'))
 #########################################################
 # Best subsets Regression:
 #########################################################
-%matplotlib inline
+# %matplotlib inline
 import pandas as pd
 import numpy as np
 import itertools
 import time
 import statsmodels.api as sm
 import matplotlib.pyplot as plt
+import time
 
 # -- Extract validation subset: Keeping for last - never tested on
 validation_data = new_data_reduce3[int(len(new_data_reduce3)*0.99):]
@@ -252,20 +253,26 @@ validation_gspc_px = gspc_px[int(len(gspc_px)*0.99):]
 # -- Test / Train split:
 non_validation_data = new_data_reduce3[:int(len(new_data_reduce3)*0.99)]
 non_validation_gspc = gspc_px[:int(len(gspc_px)*0.99)]
-data_train, data_test, gspc_px_train, gspc_px_test = train_test_split(non_validation_data, non_validation_gspc, test_size=0.3, random_state=0)
+data_train, data_test, gspc_px_train, gspc_px_test = train_test_split(non_validation_data.reset_index(), non_validation_gspc.reset_index(), test_size=0.3, random_state=0)
 
-def process_subset(feature_set_list, y, X):
+del data_train['DATE']
+del gspc_px_train['index']
+
+def process_subset(feature_set_list):
+    y = gspc_px_train
+    X = data_train
     # Fit model on feature_set and calculate RSS
     model = sm.OLS(y,X[list(feature_set_list)])
     regr = model.fit()
     RSS = ((regr.predict(X[list(feature_set_list)]) - y) ** 2).sum()
     return {"model":regr, "RSS":RSS}
 
-def best_model_per_predictor(k, y, X):
+def best_model_per_predictor(k):
+    X = data_train
     tic = time.time()
     results = []
     for combo in itertools.combinations(X.columns, k):
-        results.append(process_subset(combo, y, X))
+        results.append(process_subset(combo))
     # Wrap everything up in a nice dataframe
     models = pd.DataFrame(results)
     # Choose the model with the highest RSS
@@ -278,9 +285,13 @@ def best_model_per_predictor(k, y, X):
 # Could take quite awhile to complete...
 models_best = pd.DataFrame(columns=["RSS", "model"])
 
+#x = best_model_per_predictor(2)
+
 tic = time.time()
-for i in range(1,8):
-    models_best.loc[i] = best_model_per_predictor(i, gspc_px_test, data_train)
+for i in range(1,11):
+    #models_best.loc[i] = best_model_per_predictor(i)
+    models_best['RSS'] = best_model_per_predictor(i)['RSS']
+    models_best['model'] = best_model_per_predictor(i)['model']
 
 toc = time.time()
 print("Total elapsed time:", (toc-tic), "seconds.")
