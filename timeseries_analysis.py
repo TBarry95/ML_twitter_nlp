@@ -276,7 +276,7 @@ def best_model_per_predictor(k):
     # Wrap everything up in a nice dataframe
     models = pd.DataFrame(results)
     # Choose the model with the highest RSS
-    best_model = models.loc[models['RSS'].argmin()]
+    best_model = models.loc[models['RSS'].values.argmin()]
     toc = time.time()
     print("Processed", models.shape[0], "models on", k, "predictors in", (toc - tic), "seconds.")
     # Return the best model, along with some other useful information about the model
@@ -285,13 +285,13 @@ def best_model_per_predictor(k):
 # Could take quite awhile to complete...
 models_best = pd.DataFrame(columns=["RSS", "model"])
 
-#x = best_model_per_predictor(2)
+x = best_model_per_predictor(1)
 
 tic = time.time()
-for i in range(1,11):
-    #models_best.loc[i] = best_model_per_predictor(i)
-    models_best['RSS'] = best_model_per_predictor(i)['RSS']
-    models_best['model'] = best_model_per_predictor(i)['model']
+for i in range(1,2):
+    x = best_model_per_predictor(i)
+    models_best['RSS'] = x['RSS']
+    models_best['model'] = x['model']
 
 toc = time.time()
 print("Total elapsed time:", (toc-tic), "seconds.")
