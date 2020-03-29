@@ -41,6 +41,15 @@ new_data = pd.DataFrame({"DATE": all_data['DATE'],
                          "CONF_INX_INDV": all_data["CONF_INX_INDV"],
                          "HOUSE_PX_INX_REAL": all_data["HOUSE_PX_INX_REAL"],
                          "GSPC_VOL": all_data['GSPC_VOL'],
+                         "BRENT_PRICE": all_data['BRENT_PRICE'],
+                         "SP_DIVIDEND": all_data['SP_DIVIDEND'],
+                         "SP_EARNINGS": all_data['SP_EARNINGS'],
+                         "CPI": all_data['CPI'],
+                         "LONG_IR_RATE": all_data['LONG_IR_RATE'],
+                         "SP_REAL_PRICE": all_data['SP_REAL_PRICE'],
+                         "REAL_DIVIDEND": all_data['REAL_DIVIDEND'],
+                         "REAL_EARNING": all_data['REAL_EARNING'],
+                         "PE_RATIO": all_data['PE_RATIO'],
                          "GSPC_CLOSE": all_data['GSPC_CLOSE']})
 
 # 2. Check data: null values
@@ -65,6 +74,15 @@ new_data_reduce2 = pd.DataFrame({"DATE": new_data_reduce1['DATE'],
                          "CONF_INX_INDV": new_data_reduce1["CONF_INX_INDV"].fillna(method='ffill'),
                          "HOUSE_PX_INX_REAL": new_data_reduce1["HOUSE_PX_INX_REAL"].fillna(method='ffill'),
                          "GSPC_VOL": new_data_reduce1['GSPC_VOL'].fillna(method='ffill'),
+                         "BRENT_PRICE": new_data_reduce1['BRENT_PRICE'].fillna(method='ffill'),
+                         "SP_DIVIDEND": new_data_reduce1['SP_DIVIDEND'].fillna(method='ffill'),
+                         "SP_EARNINGS": new_data_reduce1['SP_EARNINGS'].fillna(method='ffill'),
+                         "CPI": new_data_reduce1['CPI'].fillna(method='ffill'),
+                         "LONG_IR_RATE": new_data_reduce1['LONG_IR_RATE'].fillna(method='ffill'),
+                         "SP_REAL_PRICE": new_data_reduce1['SP_REAL_PRICE'].fillna(method='ffill'),
+                         "REAL_DIVIDEND": new_data_reduce1['REAL_DIVIDEND'].fillna(method='ffill'),
+                         "REAL_EARNING": new_data_reduce1['REAL_EARNING'].fillna(method='ffill'),
+                         "PE_RATIO": new_data_reduce1['PE_RATIO'].fillna(method='ffill'),
                          "GSPC_CLOSE": new_data_reduce1['GSPC_CLOSE'].fillna(method='ffill')})
 
 # 4. Check data: null values
@@ -83,6 +101,15 @@ new_data_reduce3 = pd.DataFrame({"DATE": new_data_reduce2['DATE'],
                          "CONF_INX_INDV": new_data_reduce2["CONF_INX_INDV"].fillna(method='bfill'),
                          "HOUSE_PX_INX_REAL": new_data_reduce2["HOUSE_PX_INX_REAL"].fillna(method='bfill'),
                          "GSPC_VOL": new_data_reduce2['GSPC_VOL'],
+                         "BRENT_PRICE": new_data_reduce2['BRENT_PRICE'].fillna(method='bfill'),
+                         "SP_DIVIDEND": new_data_reduce2['SP_DIVIDEND'].fillna(method='bfill'),
+                         "SP_EARNINGS": new_data_reduce2['SP_EARNINGS'].fillna(method='bfill'),
+                         "CPI": new_data_reduce2['CPI'].fillna(method='bfill'),
+                         "LONG_IR_RATE": new_data_reduce2['LONG_IR_RATE'].fillna(method='bfill'),
+                         "SP_REAL_PRICE": new_data_reduce2['SP_REAL_PRICE'].fillna(method='bfill'),
+                         "REAL_DIVIDEND": new_data_reduce2['REAL_DIVIDEND'].fillna(method='bfill'),
+                         "REAL_EARNING": new_data_reduce2['REAL_EARNING'].fillna(method='bfill'),
+                         "PE_RATIO": new_data_reduce2['PE_RATIO'].fillna(method='bfill'),
                          "GSPC_CLOSE": new_data_reduce2['GSPC_CLOSE']})
 
 # 5. Check data: clean dataset:
@@ -92,16 +119,132 @@ sns.heatmap(new_data_reduce3.isnull(), cbar=False)
 new_data_reduce3.to_csv(r"C:\Users\btier\Documents\new_data_reduce3.csv", index=False)
 
 ######################################################################################
-# Analysis: Regression - 1. PCA, 2. PCR, 3. Best Subsets Regression
+# Analysis: Regression
+# 1. Explore dataset: Check for Multicollinearity + Plots.
+# 2. Linear Regression: OLS: Using All variables vs VIF results + Plots.
+# 3. PCA: Principal Component Analysis + Plots.
+# 4. PCR: Principal Component Regression + Plots.
 ######################################################################################
 
 #########################################################
-# 1. PCA: Principal Component Analysis: On training data
+# # 1. Explore Dataset: Check for Multicollinearity
 #########################################################
+import seaborn as sns
+sns.set(style="white")
+from statsmodels.stats.outliers_influence import variance_inflation_factor
 
-# -- Seperate dependent and independent variables
+# -- Prepare data: Seperate dependent and independent variables
 gspc_px = new_data_reduce3['GSPC_CLOSE']
 del new_data_reduce3['GSPC_CLOSE']
+
+# -- Extract validation subset: Keeping for last - never tested on
+validation_data = new_data_reduce3[int(len(new_data_reduce3)*0.96):]
+validation_gspc_px = gspc_px[int(len(gspc_px)*0.96):]
+
+# -- Test / Train split:
+non_validation_data = new_data_reduce3[:int(len(new_data_reduce3)*0.96)]
+non_validation_gspc = gspc_px[:int(len(gspc_px)*0.96)]
+data_train, data_test, gspc_px_train, gspc_px_test = train_test_split(non_validation_data.reset_index(), non_validation_gspc.reset_index(), test_size=0.3, random_state=0)
+
+del data_train['DATE']
+del data_test['DATE']
+del validation_data['DATE']
+del gspc_px_train['index']
+del gspc_px_test['index']
+del data_train['index']
+del data_test['index']
+
+# -- Plot: Correlation Matrix Plot:
+corr_mx = data_train.corr()
+mask_values = np.triu(np.ones_like(corr_mx, dtype=np.bool))
+f, ax = plt.subplots(figsize=(12, 10))
+col_map = sns.diverging_palette(220, 10, as_cmap=True)
+sns.heatmap(corr_mx, mask=mask_values, cmap=col_map, vmax=.3, center=0, annot=True,
+            square=True, linewidths=.5, cbar_kws={"shrink": .5})
+
+# -- VIF: Variation Inflation Factor - Suggests which variables to keep.
+vif_df = pd.DataFrame()
+vif_df["VIF_FACTOR"] = [variance_inflation_factor(data_train.values, i) for i in range(data_train.shape[1])]
+vif_df["FEATURES"] = data_train.columns
+print(vif_df)
+predictor_variables = vif_df[vif_df["VIF_FACTOR"] < 10]
+print(predictor_variables)
+
+#########################################################
+# Linear Regression: VIF results vs All Variables
+#########################################################
+import statsmodels.api as sm
+
+# -- Run OLS regression using ALL predictors:
+lr_model_all_train = sm.OLS(gspc_px_train, data_train).fit()
+predictions_test = lr_model_all_train.predict(data_test)
+model_summary_train = lr_model_all_train.summary()
+print(model_summary_train)
+
+# -- Validate OLS regression using ALL predictors:
+predictions_all = lr_model_all_train.predict(validation_data)
+
+# -- Find Metrics and Visualise:
+mse_pred_all_vars = mean_squared_error(validation_gspc_px, predictions_all)
+mae_pred_all_vars = mean_absolute_error(validation_gspc_px, predictions_all)
+rmse_pred_all_vars = np.sqrt(mse_pred_all_vars)
+r2_all_vars = r2_score(validation_gspc_px, predictions_all)
+median_ae_all_vars = median_absolute_error(validation_gspc_px, predictions_all)
+print('Mean Squared Error:', mse_pred_all_vars)
+print('Mean Absolute Error:', mae_pred_all_vars)
+print('Root Mean Squared Error:', rmse_pred_all_vars)
+print('R-Squared:', r2_all_vars)
+print('Median Absolute Error:', median_ae_all_vars)
+
+compare_validation = pd.DataFrame({'ACTUAL_PRICE': validation_gspc_px, 'PREDICTED_PRICE': predictions_all})
+plt.figure()
+plot1, = plt.plot([i for i in range(0,len(compare_validation.index))], compare_validation['ACTUAL_PRICE'])
+plot2, = plt.plot([i for i in range(0,len(compare_validation.index))], compare_validation['PREDICTED_PRICE'])
+plt.xlabel('Prediction - Number of days')
+plt.ylabel('Price of S&P500')
+plt.title('Time Series - Compairson of Actual vs Predicted Prices')
+plt.legend((plot1, plot2), ('S&P500 - Actual', 'S&P500 - Predicted'))
+
+'''
+# -- Compare results in table format:
+df_compare_validation = pd.DataFrame({'ACTUAL_PRICE': validation_gspc_px, 'PREDICTED_PRICE': predictions_pcr.flatten()})
+print(df_compare_validation.head(30))
+
+# -- Plot Predictions against Actual Prices: 
+plt.figure()
+plot1, = plt.plot([i for i in range(0,len(df_compare_validation.index))], df_compare_validation['ACTUAL_PRICE'])
+plot2, = plt.plot([i for i in range(0,len(df_compare_validation.index))], df_compare_validation['PREDICTED_PRICE'])
+plt.xlabel('Prediction - Number of days')
+plt.ylabel('Price of S&P500')
+plt.title('Time Series - Compairson of Actual vs Predicted Prices')
+plt.legend((plot1, plot2), ('S&P500 - Actual', 'S&P500 - Predicted'))'''
+
+# -- Test OLS regression using VIF predictors:
+lr_model_vif_train = sm.OLS(gspc_px_train, data_train[['FED_FUND_RATE', 'GSPC_VOL']]).fit()
+predictions_vif_test = lr_model_vif_train.predict(data_test[['FED_FUND_RATE', 'GSPC_VOL']])
+model_summary_vif_train = lr_model_vif_train.summary()
+print(model_summary_vif_train)
+
+# -- Validate OLS regression using VIF predictors:
+predictions_vif = lr_model_vif_train.predict(validation_data[['FED_FUND_RATE', 'GSPC_VOL']])
+model_summary_vif = lr_model_vif_train.summary()
+print(model_summary_vif)
+
+# -- Find Metrics and Visualise:
+mse_pred_vif = mean_squared_error(validation_gspc_px, predictions_vif)
+mae_pred_vif = mean_absolute_error(validation_gspc_px, predictions_vif)
+rmse_pred_vif = np.sqrt(mse_pred_vif)
+r2_vif = r2_score(validation_gspc_px, predictions_vif)
+median_ae_vif = median_absolute_error(validation_gspc_px, predictions_vif)
+print('Mean Squared Error:', mse_pred_vif)
+print('Mean Absolute Error:', mae_pred_vif)
+print('Root Mean Squared Error:', rmse_pred_vif)
+print('R-Squared:', r2_vif)
+print('Median Absolute Error:', median_ae_vif)
+
+#########################################################
+# PCA: Principal Component Analysis: On training data
+#########################################################
 
 # -- Set date as index, so that it can easily be reapplied once removed
 new_data_reduce3 = new_data_reduce3.set_index(new_data_reduce3['DATE'])
@@ -111,13 +254,9 @@ del new_data_reduce3['DATE']
 # -- Initialise PCA class
 pca2 = PCA()
 
-# -- Extract validation subset: Keeping for last - never tested on
-validation_data = new_data_reduce3[int(len(new_data_reduce3)*0.99):]
-validation_gspc_px = gspc_px[int(len(gspc_px)*0.99):]
-
 # -- Test / Train split:
-non_validation_data = new_data_reduce3[:int(len(new_data_reduce3)*0.99)]
-non_validation_gspc = gspc_px[:int(len(gspc_px)*0.99)]
+non_validation_data = new_data_reduce3[:int(len(new_data_reduce3)*0.96)]
+non_validation_gspc = gspc_px[:int(len(gspc_px)*0.96)]
 data_train, data_test, gspc_px_train, gspc_px_test = train_test_split(non_validation_data, non_validation_gspc, test_size=0.3, random_state=0)
 
 # -- Standardise/scale the training data such that each column's mean = 0
@@ -128,7 +267,7 @@ print(pd.DataFrame(pca2.components_.T).head())
 kfold_cv_10_2 = model_selection.KFold(n_splits=10, random_state=0, shuffle=True)
 
 # -- Initialise LR model
-lr_model_2 = LinearRegression()
+lr_model_pca = LinearRegression()
 
 # -- Use MSE as an indicator for closest fit:
 mse_pca_2 = []
@@ -136,7 +275,7 @@ mse_pca_2 = []
 # -- Looping through X number of PC's, appends the MSE to above list. Will be used to find best model.
 for i in np.arange(1, 11):
     # Multiple by -1 to negate the scoring method
-    mse_result = -1 * model_selection.cross_val_score(lr_model_2, data_reduced_train[:, :i], gspc_px_train.ravel(),
+    mse_result = -1 * model_selection.cross_val_score(lr_model_pca, data_reduced_train[:, :i], gspc_px_train.ravel(),
                                                       cv=kfold_cv_10_2,scoring='neg_mean_squared_error').mean()
     mse_pca_2.append(mse_result)
 
@@ -156,7 +295,7 @@ plt.ylabel('% Variance Explained')
 plt.title('Elbow Chart - Variance Explained by Principal Component')
 
 #########################################################
-# 2. PCR: Principal Component Regression: Train and test LR model based on PCA.
+# PCR: Principal Component Regression: Train and test LR model based on PCA.
 #########################################################
 
 # -- Standardise/scale the test data such that each column's mean = 0
@@ -164,13 +303,13 @@ data_reduced_test = pca2.fit_transform(scale(data_test))
 print(pd.DataFrame(pca2.components_.T).head())
 
 # -- Initialise LR model
-lr_model_run_2 = LinearRegression()
+lr_model_pca_run = LinearRegression()
 
 # -- Fit LR model: 6 PC's based on Elbow graph
-lr_model_run_2.fit(data_reduced_train[:,:6], gspc_px_train)
+lr_model_pca_run.fit(data_reduced_train[:,:6], gspc_px_train)
 
 # -- Run model:
-predictions_2 = lr_model_run_2.predict(data_reduced_test[:,:6])
+predictions_2 = lr_model_pca_run.predict(data_reduced_test[:,:6])
 
 # -- Find Metrics and Visualise:
 mse_pred_2 = mean_squared_error(gspc_px_test, predictions_2)
@@ -185,12 +324,9 @@ print('Root Mean Squared Error:', rmse_pred_2)
 print('R-Squared:', r2)
 print('Median Absolute Error:', median_ae)
 
-metrics = pd.DataFrame([mse_pred_2, mae_pred_2, rmse_pred_2])
-metrics.plot(kind = 'bar')
-
 # -- Print Equation:
-intercept = lr_model_run_2.intercept_
-coefs = lr_model_run_2.coef_
+intercept = lr_model_pca_run.intercept_
+coefs = lr_model_pca_run.coef_
 pc = ['PC1', 'PC2', 'PC3', 'PC4', 'PC5', 'PC6']
 print("Regression Equation 6 PC's: ", round(intercept), '+ (', pc[0],round(coefs[0]), ') + (' ,pc[1],round(coefs[1]), ') + (', pc[2],round(coefs[2]),
       ') + (' ,pc[3],round(coefs[3]), ') + (', pc[4],round(coefs[4]), ') + (' ,pc[5],round(coefs[5]), ')')
@@ -199,31 +335,35 @@ print("Regression Equation 6 PC's: ", round(intercept), '+ (', pc[0],round(coefs
 df_compare = pd.DataFrame({'ACTUAL_PRICE': gspc_px_test, 'PREDICTED_PRICE': predictions_2.flatten()})
 print(df_compare.head(30))
 
+validation_data_no_date = validation_data[['GOLD_USD_AM', 'SILVER_PRICE_USD', 'PLAT_OPEN_USD',
+       'FED_FUND_RATE', 'USD_GBP', 'BUILD_COST_INX', 'US_POP_MILL',
+       'CONF_INX_INST', 'CONF_INX_INDV', 'HOUSE_PX_INX_REAL', 'GSPC_VOL']]
+
 # -- Run PCR on Validation dataset:
-data_reduced_validation = pca2.fit_transform(scale(validation_data))
+data_reduced_validation = pca2.fit_transform(scale(validation_data_no_date))
 print(pd.DataFrame(pca2.components_.T).head())
 
 # -- Fit LR model: 6 PC's based on Elbow graph
-lr_model_run_2.fit(data_reduced_validation[:,:6], validation_gspc_px)
+# lr_model_pca_run.fit(data_reduced_validation[:,:6], validation_gspc_px)
 
 # -- Run model:
-predictions_3 = lr_model_run_2.predict(data_reduced_validation[:,:6])
+predictions_pcr = lr_model_pca_run.predict(data_reduced_validation[:,:6])
 
 # -- Find Metrics and Visualise:
-mse_pred_3 = mean_squared_error(validation_gspc_px, predictions_3)
-mae_pred_3 = mean_absolute_error(validation_gspc_px, predictions_3)
-rmse_pred_3 = np.sqrt(mse_pred_3)
-r2_3 = r2_score(validation_gspc_px, predictions_3)
-median_ae_3 = median_absolute_error(validation_gspc_px, predictions_3)
+mse_pred_pcr = mean_squared_error(validation_gspc_px, predictions_pcr)
+mae_pred_pcr = mean_absolute_error(validation_gspc_px, predictions_pcr)
+rmse_pred_pcr = np.sqrt(mse_pred_pcr)
+r2_pcr = r2_score(validation_gspc_px, predictions_pcr)
+median_ae_pcr = median_absolute_error(validation_gspc_px, predictions_pcr)
 
-print('Mean Squared Error:', mse_pred_3)
-print('Mean Absolute Error:', mae_pred_3)
-print('Root Mean Squared Error:', rmse_pred_3)
-print('R-Squared:', r2_3)
-print('Median Absolute Error:', median_ae_3)
+print('Mean Squared Error:', mse_pred_pcr)
+print('Mean Absolute Error:', mae_pred_pcr)
+print('Root Mean Squared Error:', rmse_pred_pcr)
+print('R-Squared:', r2_pcr)
+print('Median Absolute Error:', median_ae_pcr)
 
 # -- Compare results in table format:
-df_compare_validation = pd.DataFrame({'ACTUAL_PRICE': validation_gspc_px, 'PREDICTED_PRICE': predictions_3.flatten()})
+df_compare_validation = pd.DataFrame({'ACTUAL_PRICE': validation_gspc_px, 'PREDICTED_PRICE': predictions_pcr.flatten()})
 print(df_compare_validation.head(30))
 
 plt.figure()
@@ -233,67 +373,4 @@ plt.xlabel('Prediction - Number of days')
 plt.ylabel('Price of S&P500')
 plt.title('Time Series - Compairson of Actual vs Predicted Prices')
 plt.legend((plot1, plot2), ('S&P500 - Actual', 'S&P500 - Predicted'))
-
-#########################################################
-# Best subsets Regression:
-#########################################################
-# %matplotlib inline
-import pandas as pd
-import numpy as np
-import itertools
-import time
-import statsmodels.api as sm
-import matplotlib.pyplot as plt
-import time
-
-# -- Extract validation subset: Keeping for last - never tested on
-validation_data = new_data_reduce3[int(len(new_data_reduce3)*0.99):]
-validation_gspc_px = gspc_px[int(len(gspc_px)*0.99):]
-
-# -- Test / Train split:
-non_validation_data = new_data_reduce3[:int(len(new_data_reduce3)*0.99)]
-non_validation_gspc = gspc_px[:int(len(gspc_px)*0.99)]
-data_train, data_test, gspc_px_train, gspc_px_test = train_test_split(non_validation_data.reset_index(), non_validation_gspc.reset_index(), test_size=0.3, random_state=0)
-
-del data_train['DATE']
-del gspc_px_train['index']
-
-def process_subset(feature_set_list):
-    y = gspc_px_train
-    X = data_train
-    # Fit model on feature_set and calculate RSS
-    model = sm.OLS(y,X[list(feature_set_list)])
-    regr = model.fit()
-    RSS = ((regr.predict(X[list(feature_set_list)]) - y) ** 2).sum()
-    return {"model":regr, "RSS":RSS}
-
-def best_model_per_predictor(k):
-    X = data_train
-    tic = time.time()
-    results = []
-    for combo in itertools.combinations(X.columns, k):
-        results.append(process_subset(combo))
-    # Wrap everything up in a nice dataframe
-    models = pd.DataFrame(results)
-    # Choose the model with the highest RSS
-    best_model = models.loc[models['RSS'].values.argmin()]
-    toc = time.time()
-    print("Processed", models.shape[0], "models on", k, "predictors in", (toc - tic), "seconds.")
-    # Return the best model, along with some other useful information about the model
-    return best_model
-
-# Could take quite awhile to complete...
-models_best = pd.DataFrame(columns=["RSS", "model"])
-
-x = best_model_per_predictor(1)
-
-tic = time.time()
-for i in range(1,2):
-    x = best_model_per_predictor(i)
-    models_best['RSS'] = x['RSS']
-    models_best['model'] = x['model']
-
-toc = time.time()
-print("Total elapsed time:", (toc-tic), "seconds.")
-
 
