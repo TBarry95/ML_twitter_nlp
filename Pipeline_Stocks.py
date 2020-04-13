@@ -17,20 +17,19 @@ from sklearn.model_selection import train_test_split
 # 1. Get stock prices:
 # -- SPX
 spx_df = fns.alpha_v_to_df(fns.get_data_alpha_v2("SPX"))
-
-
+spx_target = spx_df['CLOSE_PRICE'].shift(-1) # get dependent variable (-1 = predict 1 day ahead, etc)
 spx_validate = spx_df[0:int(len(spx_df)*0.10)]
-spx_df_test_train = spx_df[int(len(spx_df)*0.10):]
-# ---- SPLIT DATA: Train (65%), test (25%), validate (10%)
-
-X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.3, random_state=42)
-
+spx_target_validate = spx_target[0:int(len(spx_df)*0.10)]
+spx_df_test_train = spx_df[int(len(spx_df)*0.10):] # this to be split between test and train
+spx_target_test_train = spx_target[int(len(spx_df)*0.10):]
 
 # -- DJIA
 djia_df = fns.alpha_v_to_df(fns.get_data_alpha_v2("DJIA"))
-
-
-# ---- SPLIT DATA: Train (65%), test (25%), validate (10%)
+djia_target = djia_df['CLOSE_PRICE'].shift(-1)  # get dependent variable (-1 = predict 1 day ahead, etc)
+djia_validate = djia_df[0:int(len(djia_df)*0.10)]
+djia_target_validate = djia_target[0:int(len(djia_df)*0.10)]
+djia_df_test_train = djia_df[int(len(djia_df)*0.10):] # this to be split between test and train
+djia_target_test_train = djia_target[int(len(djia_target)*0.10):]
 
 
 # 2. Get Trump Tweets:
@@ -46,8 +45,6 @@ trump_df_nort = fns.get_json_data_to_df(fns.get_trump_json_data(r"C:\Users\btier
 
 # Stock timeseries:
 
-
-
 # Trump twitter data:
 # -- Clean: Cleans trump_df_all['text'] column to 'processed text'
 trump_df_clean = fns.clean_text_words(trump_df_all)
@@ -61,31 +58,18 @@ top_words = fns.get_top_words(trump_df_clean)
 # -- Sentiment: Add sentiment to trump_df_clean
 trump_df_clean = fns.get_sentiment_pa(trump_df_clean)
 
+# # # # # # # # # # # # #
+# Process data:
+# # # # # # # # # # # # #
 
-# Join combined stock price data:
-merged_data = pd.merge(trump_df_clean, combined_df, on = "DATE", how = "left")
-merged_data = pd.DataFrame(merged_data)
-merged_data.drop_duplicates()
+# Split data for test and training: (validate already kept aside!)
+# ---- SPLIT DATA: Train 70%, Test 30% - (of 90% - due to validation set)
+spx_train, spx_test, spx_price_train, spx_price_test = train_test_split(spx_df_test_train, spx_target_test_train, test_size=0.3, shuffle=False)
 
-merged_data.to_csv(r"C:\Users\btier\Documents\sCOMBINED.csv", sep=',',index=False)
+djia_train, djia_test, djia_price_train, djia_price_test = train_test_split(djia_df_test_train, djia_target_test_train, test_size=0.3, shuffle=False)
 
-
-
-
-
-trump_df_clean.to_csv(r"C:\Users\btier\Documents\sentiment_trump.csv", sep=',')
-# fns.get_sentiment_nbayes(trump_df_clean)
-
-# Stock price data:
-
-
-
-
-
-
-
-
-
+correlations = np.abs(spx_train.corrwith(spx_price_train))
+features =  list(correlations.sort_values(ascending=False)[0:10].index)
 
 
 

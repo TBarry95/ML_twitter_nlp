@@ -44,7 +44,7 @@ class TwitterClientClass(): #twitter_client_class
 
     def get_hashtag_tweets(self, num_of_tweets, hashtag):
         tweet_list = []
-        for i in Cursor(self.twitter_client.search, q = hashtag, lang = "en").items(num_of_tweets):
+        for i in Cursor(self.twitter_client.search, q = hashtag, lang = "en").pages(num_of_tweets):
             tweet_list.append(i)
             return(tweet_list)
 

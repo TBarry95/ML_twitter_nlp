@@ -28,7 +28,6 @@ import pickle
 import pyLDAvis
 import os
 
-
 # # # # # # # # # # # # #
 # Extract:
 # # # # # # # # # # # # #
@@ -47,7 +46,7 @@ def get_tweets_list(list_of_twitter_accs, num_pages):
 def tweets_to_df(all):
     df_all_tweets = pd.DataFrame()
     df_all_tweets['TWEET_ID'] = [i.id for i in all]
-    df_all_tweets['DATE_TIME'] = [i.created_at for i in all]
+    df_all_tweets['DATE_TIME'] = [str(i.created_at)[0:10] for i in all]
     df_all_tweets['TWITTER_ACC'] = [i.user.name for i in all]
     df_all_tweets['STR_ID'] = [i.id_str for i in all]
     df_all_tweets['FULL_TEXT'] = [i.full_text for i in all]
@@ -149,11 +148,6 @@ def alpha_v_to_df_add_col(ticker_dict):
 
     return df
 
-def enrich_combined_data(ticker_df_combined):
-    pct_chg = []
-    for i in ticker_df['Close_Price']:
-        pct_chg.append()
-
 def get_trump_json_data(local_filepath):
     with open(local_filepath, encoding="utf8") as json_trump_tweets:
         data = json.load(json_trump_tweets)
@@ -171,12 +165,21 @@ def get_json_data_to_df(data):
     df['ID_STR'] = [x.get('id_str') for x in data]
     return df
 
-def write_to_mongo(cluster_name, collection_name, data):
-    cluster = MongoClient("mongodb+srv://tbarry_95:stocks_nlp@stock-nlp-cluster-ykrj9.mongodb.net/test?retryWrites=true&w=majority")
-    db = cluster[cluster_name]
-    collection = db[collection_name]
-    collection.insert_one(data)
-    return data
+def get_tweet_pgs(user_name, num_pgs):
+    tweets = twt.TwitterClientClass(twit_user=user_name).get_timeline_pages(num_pgs)
+    tweetslist = []
+    tweets_df = pd.DataFrame()
+    for i in tweets:
+        tweetslist.append(twt.AnalyseTweetsClass().dataframe_tweets(i))
+    return tweetslist
+
+
+def get_tweets_hashtag(num_pgs, hashtag):
+    tweets = twt.TwitterClientClass().get_hashtag_tweets(num_pgs, hashtag)
+    tweetslist = []
+    for i in tweets:
+        tweetslist.append(twt.AnalyseTweetsClass().dataframe_tweets(i))
+    return tweetslist
 
 
 # # # # # # # # # # # # #
@@ -325,9 +328,26 @@ def get_sentiment_nbayes(trump_df_clean):
     trump_df_clean['SENTIMENT_NB'] = sentiment
     return trump_df_clean
 
-
-
-
+def map_reduce_data(trump_tweets):
+    # 2. reduce key,values by date and find average score per date:
+    last_date_key = None
+    aggregate_sentiment = 0
+    count_per_date = 0
+    for sentiment in range(0, len(trump_tweets["SENTIMENT_PA"])):
+        this_date_key, sentiment_value = trump_tweets["DATE_TIME"][i], trump_tweets["SENTIMENT_PA"][i]
+        sentiment_value = float(sentiment_value)
+        if last_date_key == this_date_key:
+            count_per_date += 1
+            aggregate_sentiment += sentiment_value
+        else:
+            if last_date_key:
+                print(('%s\t%s\t%s') % (last_date_key, aggregate_sentiment / count_per_date, count_per_date))
+            aggregate_sentiment = sentiment_value
+            last_date_key = this_date_key
+            count_per_date = 1
+    # -- Output the least popular / min count sentiment sentiment
+    if last_date_key == this_date_key:
+        print(('%s\t%s\t%s') % (last_date_key, aggregate_sentiment / count_per_date, count_per_date))
 
 
 

@@ -159,7 +159,7 @@ corr_mx = data_train.corr()
 mask_values = np.triu(np.ones_like(corr_mx, dtype=np.bool))
 f, ax = plt.subplots(figsize=(12, 10))
 col_map = sns.diverging_palette(220, 10, as_cmap=True)
-sns.heatmap(corr_mx, mask=mask_values, cmap=col_map, vmax=.3, center=0, annot=True,
+sns.heatmap(corr_mx, mask=mask_values, cmap=col_map, center=0, annot=True,
             square=True, linewidths=.5, cbar_kws={"shrink": .5})
 
 # -- VIF: Variation Inflation Factor - Suggests which variables to keep.
@@ -174,6 +174,18 @@ print(predictor_variables)
 # Linear Regression: VIF results vs All Variables
 #########################################################
 import statsmodels.api as sm
+
+# -- Test / Train split:
+non_validation_data = new_data_reduce3[:int(len(new_data_reduce3)*0.96)]
+non_validation_gspc = gspc_px[:int(len(gspc_px)*0.96)]
+data_train, data_test, gspc_px_train, gspc_px_test = train_test_split(non_validation_data.reset_index(), non_validation_gspc.reset_index(), test_size=0.3, random_state=0)
+
+del data_train['DATE']
+del data_test['DATE']
+del gspc_px_train['index']
+del gspc_px_test['index']
+del data_train['index']
+del data_test['index']
 
 # -- Run OLS regression using ALL predictors:
 lr_model_all_train = sm.OLS(gspc_px_train, data_train).fit()

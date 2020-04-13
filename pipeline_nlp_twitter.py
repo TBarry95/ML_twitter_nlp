@@ -9,26 +9,9 @@ import matplotlib.pyplot as plt
 import warnings
 warnings.simplefilter("ignore", DeprecationWarning)
 
-###########################################
-# Extract:
-###########################################
-
-twitter_pgs = ["CNN", "BBCWorld", "BBCBreaking", "BBCNews", "ABC", "itvnews", "Independent",
-               "CBSNews", "MSNBC", "nytimes", "FT", "business", "cnni", "RT_com", "AJEnglish", "CBS", "NewsHour",
-               "NPR", "BreakingNews", "cnnbrk", "WSJ", "Reuters", "SkyNews", "CBCAlerts"]
-
-tweets_list = fns.get_tweets_list(twitter_pgs, 5) # change to 40 +
-
-df_all_tweets = fns.tweets_to_df(tweets_list)
-
-df_all_tweets = df_all_tweets.sort_values(by='DATE_TIME', ascending=0)
-
-###########################################
-# Transform:
-###########################################
-
-# Check for NAs
-#msno.matrix(df_all_tweets)
+# Read in tweets as sourced from get_datasets.py
+df_all_tweets = pd.read_csv(r"C:\Users\btier\Documents\twitter_mass_media_data.csv")
+gspc_df = pd.read_csv(r"C:\Users\btier\Downloads\^GSPC.csv")
 
 # Make new column for processed name:
 df_all_tweets['PROCESSED_TEXT'] = df_all_tweets['FULL_TEXT'].map(lambda i: re.sub("(@[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+:\/\/\S+)|(RT)", '', i))
@@ -49,16 +32,31 @@ plt.rc('xtick', labelsize=30)
 plt.rc('ytick', labelsize=30)
 plt.title("Top 10 Words", fontsize=20)
 
-# get sentiment: 3 sentiments Textblob: a: (1,0,-1), b: (1:-1), c: bayes classifier (pos,neg)
+# get sentiment: 2 sentiments Textblob: a: (1,0,-1), b: (1:-1)
 df_all_tweets["SENTIMENT_1"] = np.array([twt.AnalyseTweetsClass().sentiment_analyser(i) for i in df_all_tweets["PROCESSED_TEXT"]])
 df_all_tweets = fns.get_sentiment_pa(df_all_tweets)
+
+df_all_tweets['DATE_TIME'] = [str(i)[0:10] for i in df_all_tweets['DATE_TIME']]
+
+df_all_tweets = pd.merge(df_all_tweets, pd.DataFrame({"DATE": gspc_df['Date'], "SP_CLOSE": gspc_df['Close']}), how='left', left_on='DATE_TIME', right_on='DATE')
+msno.matrix(df_all_tweets, figsize= (50,30))
+
+data_4_lr = pd.DataFrame({"FAV_COUNT": df_all_tweets['FAV_COUNT'],
+                          "RT_COUNT": df_all_tweets['RT_COUNT'],
+                          "FOLLOWERS": df_all_tweets['FOLLOWERS'],
+                          "SENTIMENT_PA": df_all_tweets['SENTIMENT_PA'],
+                          "SP_CLOSE": df_all_tweets['SP_CLOSE'].fillna(method='ffill')})
+msno.matrix(data_4_lr, figsize= (50,30))
+
+
+
+
+
+
+
 
 # LDA
 lda_output = fns.lda_model(df_all_tweets, 5, 15)
 
 
-
-# Visualise :
-# LDAvis_data_filepath = os.path.join('./ldavis_prepared_'+str(number_topics))
-# fns.lda_vis(df_all_tweets, 5)
 

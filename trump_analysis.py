@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 import warnings
 warnings.simplefilter("ignore", DeprecationWarning)
 
-
 ##########################################################################
 # Extract:
 ##########################################################################
@@ -90,8 +89,13 @@ trump_tweets["SENTIMENT_1"] = np.array([twt.AnalyseTweetsClass().sentiment_analy
 # -- Lexicon-based sentiment (-1:1):
 trump_tweets = fns.get_sentiment_pa(trump_tweets)
 
+# -- Plot:
+trump_tweets["SENTIMENT_1"].plot(kind='hist', legend=True)
+trump_tweets["SENTIMENT_PA"].plot(kind='hist', legend=True)
+
 # -- Get Average Sentiment for each day: Map/reduce?
 df_feature_1 = pd.DataFrame()
+
 '''
 # -- Mapper: Key = date, value = sent.
 for sent in range(0,len(trump_tweets['SENTIMENT_1'])):
@@ -145,7 +149,6 @@ for i in trump_tweets["SENTIMENT_PA"]:
     df_pa.append(i)
 
 '''
-
 ##########################################
 # 3. Sentiment Analysis: Naive Bayes Classifier
 ##########################################
@@ -159,19 +162,36 @@ for i in trump_tweets["SENTIMENT_PA"]:
 import statsmodels.api as sm
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
+from sklearn.linear_model.logistic import _logistic_loss
 
 ind_vars_for_logit = trump_tweets[['SENTIMENT_1','SENTIMENT_PA']]
-# ind_vars_for_logit = trump_tweets[['SENTIMENT_1','SENTIMENT_PA', 'RETWEET_COUNT', 'FAV_COUNT']]
+ind_vars_for_logit2 = trump_tweets[['SENTIMENT_PA']]
 dep_var = trump_tweets['SP_DIRECTION']
 
-X_train, X_test, y_train, y_test = train_test_split(ind_vars_for_logit, dep_var, test_size=0.1, random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(ind_vars_for_logit2, dep_var, test_size=0.3, random_state=0)
 
 logit_model = LogisticRegression()
 logit_model.fit(X_train, y_train)
-pred = logit_model.predict(X_test)
+pred = logit_model.predict(X_test) # results are poor due to skewed data....
 
+# create training set of balanced UP and DOWN
+plt.figure()
+num_up = len(trump_tweets['SP_DIRECTION'][trump_tweets['SP_DIRECTION'] == "UP"])
+num_down = len(trump_tweets['SP_DIRECTION'][trump_tweets['SP_DIRECTION'] == "DOWN"])
 
+##########################################
+# 4. Correlation with Stock Market:
+##########################################
 
+import seaborn as sns
+
+# -- Plot: Correlation Matrix Plot:
+corr_mx = trump_tweets[['RETWEET_COUNT', 'FAV_COUNT','SP_CLOSE','SP_PCT_CHANGE','SENTIMENT_1', 'SENTIMENT_PA']].corr()
+mask_values = np.triu(np.ones_like(corr_mx, dtype=np.bool))
+f, ax = plt.subplots(figsize=(12, 10))
+col_map = sns.diverging_palette(220, 10, as_cmap=True)
+sns.heatmap(corr_mx, mask=mask_values, cmap=col_map, center=0, annot=True,
+            square=True, linewidths=.5, cbar_kws={"shrink": .5})
 
 
 

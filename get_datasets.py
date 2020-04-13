@@ -15,17 +15,25 @@ warnings.simplefilter("ignore", DeprecationWarning)
 # Extract: 1. Twitter data from global media twitter pages.
 ######################################################################################
 
-twitter_pgs = ["CNN", "BBCWorld", "BBCBreaking", "BBCNews", "ABC", "itvnews", "Independent",
+twitter_pgs = ["CNN", "BBCWorld", "BBCBreaking", "BBCNews", "ABC", "Independent",
+               "RTENewsNow", "Independent_ie", "guardian", "guardiannews", "rtenews", "thejournal_ie",
+               "wef", "IMFNews", "WHO", "euronews", "MailOnline", "TheSun", "Daily_Express", "DailyMirror",
+               "standardnews", "LBC", "itvnews", "thetimes", "IrishTimes", "ANI", "XHNews", "TIME", "OANN",
+               "BreitbartNews", "Channel4News", "BuzzFeedNews", "NewstalkFM", "NBCNewsBusiness", "CNBCnow",
+               "markets", "YahooFinance", "MarketWatch", "Forbes", "businessinsider", "thehill", "CNNPolitics",
+               "NPR", "AP", "USATODAY", "NYDailyNews", "nypost", "BBCLondonNews", "DailyMailUK",
                "CBSNews", "MSNBC", "nytimes", "FT", "business", "cnni", "RT_com", "AJEnglish", "CBS", "NewsHour",
-               "NPR", "BreakingNews", "cnnbrk", "WSJ", "Reuters", "SkyNews", "CBCAlerts"]
+               "BreakingNews", "cnnbrk", "WSJ", "Reuters", "SkyNews", "CBCAlerts"]
 
-tweets_list = fns.get_tweets_list(twitter_pgs, 70) # change to 40 +
+tweets_list = fns.get_tweets_list(twitter_pgs, 120)
 
 df_all_tweets = fns.tweets_to_df(tweets_list)
 
 df_all_tweets = df_all_tweets.sort_values(by='DATE_TIME', ascending=0)
 
-df_all_tweets.to_csv(r"C:\Users\btier\Documents\twitter_mass_media_data.csv", index= False)
+df_all_tweets = df_all_tweets.drop_duplicates()
+
+df_all_tweets.to_csv(r"C:\Users\btier\Documents\twitter_mass_media_data_2.csv", index= False)
 
 #spx_tweet = twt.TwitterClientClass().get_hashtag_tweets(1000, "S&P500")
 
@@ -40,6 +48,17 @@ gspc_df = pd.read_csv(r"C:\Users\btier\Downloads\^GSPC.csv")
 gspc_df.columns = ['DATE', 'GSPC_OPEN', 'GSPC_HIGH', 'GSPC_LOW', 'GSPC_CLOSE', 'GSPC_ADJ_CLOSE', 'GSPC_VOL']
 
 # 2. Get predictors:
+
+# -- SP Data
+sp_data = pd.read_csv(r"C:\Users\btier\Downloads\data_csv.csv")
+del sp_data['SP500']
+sp_data.columns = ['DATE', 'SP_DIVIDEND', 'SP_EARNINGS', 'CPI', 'LONG_IR_RATE', 'SP_REAL_PRICE', 'REAL_DIVIDEND',
+                   'REAL_EARNING', 'PE_RATIO']
+
+# -- BRENT:
+brent_df = pd.read_csv(r"C:\Users\btier\Downloads\brent-daily_csv.csv")
+brent_df.columns = ['DATE', 'BRENT_PRICE']
+
 # -- GOLD:
 gold_df = fns.get_quandl('LBMA/GOLD')
 gold_df = gold_df.reset_index()
@@ -119,18 +138,41 @@ all_data = pd.merge(all_data, confidence_inx_inst, how='left', left_on='DATE', r
 all_data = pd.merge(all_data, confidence_inx_indv, how='left', left_on='DATE', right_on='DATE')
 all_data = pd.merge(all_data, house_price, how='left', left_on='DATE', right_on='DATE')
 all_data['DATE'] = [str(i)[0:10] for i in all_data['DATE']]
+all_data = pd.merge(all_data, brent_df, how='left', left_on='DATE', right_on='DATE')
+all_data = pd.merge(all_data, sp_data, how='left', left_on='DATE', right_on='DATE')
 all_data = pd.merge(all_data, gspc_df, how='left', left_on='DATE', right_on='DATE')
 
 all_data.to_csv(r"C:\Users\btier\Documents\economic_data.csv", index=False)
 
+'''
+pip install datapackage
+from datapackage import Package
+
+package = Package('https://datahub.io/core/s-and-p-500/datapackage.json')
+
+# print list of all resources:
+print(package.resource_names)
+
+# print processed tabular data (if exists any)
+for resource in package.resources:
+    if resource.descriptor['datahub']['type'] == 'derived/csv':
+        print(resource.read())
+
+import datapackage
+import pandas as pd
+
+data_url = 'https://datahub.io/core/s-and-p-500/datapackage.json'
+
+# to load Data Package into storage
+package = datapackage.Package(data_url)
+
+# to load only tabular data
+resources = package.resources
+for resource in resources:
+    if resource.tabular:
+        data = pd.read_csv(resource.descriptor['path'])
+        print (data)
 
 
 
-
-
-
-
-
-
-
-
+'''
