@@ -28,7 +28,7 @@ all_data = pd.read_csv(r"C:\Users\btier\Documents\economic_data.csv")
 # 1. Check data: null values
 msno.matrix(all_data, figsize= (50,30))
 
-# Reduce columns - eg. 1 gold, 1 silver, etc..
+# -- Reduce columns - eg. 1 gold, 1 silver, etc..
 new_data = pd.DataFrame({"DATE": all_data['DATE'],
                          "GOLD_USD_AM": all_data['GOLD_USD_AM'],
                          "SILVER_PRICE_USD": all_data['SILVER_PRICE_USD'],
@@ -41,15 +41,15 @@ new_data = pd.DataFrame({"DATE": all_data['DATE'],
                          "CONF_INX_INDV": all_data["CONF_INX_INDV"],
                          "HOUSE_PX_INX_REAL": all_data["HOUSE_PX_INX_REAL"],
                          "GSPC_VOL": all_data['GSPC_VOL'],
-                         "BRENT_PRICE": all_data['BRENT_PRICE'],
-                         "SP_DIVIDEND": all_data['SP_DIVIDEND'],
-                         "SP_EARNINGS": all_data['SP_EARNINGS'],
-                         "CPI": all_data['CPI'],
-                         "LONG_IR_RATE": all_data['LONG_IR_RATE'],
-                         "SP_REAL_PRICE": all_data['SP_REAL_PRICE'],
-                         "REAL_DIVIDEND": all_data['REAL_DIVIDEND'],
-                         "REAL_EARNING": all_data['REAL_EARNING'],
-                         "PE_RATIO": all_data['PE_RATIO'],
+                         #"BRENT_PRICE": all_data['BRENT_PRICE'],
+                         #"SP_DIVIDEND": all_data['SP_DIVIDEND'],
+                         #"SP_EARNINGS": all_data['SP_EARNINGS'],
+                         #"CPI": all_data['CPI'],
+                         #"LONG_IR_RATE": all_data['LONG_IR_RATE'],
+                         #"SP_REAL_PRICE": all_data['SP_REAL_PRICE'],
+                         #"REAL_DIVIDEND": all_data['REAL_DIVIDEND'],
+                         #"REAL_EARNING": all_data['REAL_EARNING'],
+                         #"PE_RATIO": all_data['PE_RATIO'],
                          "GSPC_CLOSE": all_data['GSPC_CLOSE']})
 
 # 2. Check data: null values
@@ -74,15 +74,15 @@ new_data_reduce2 = pd.DataFrame({"DATE": new_data_reduce1['DATE'],
                          "CONF_INX_INDV": new_data_reduce1["CONF_INX_INDV"].fillna(method='ffill'),
                          "HOUSE_PX_INX_REAL": new_data_reduce1["HOUSE_PX_INX_REAL"].fillna(method='ffill'),
                          "GSPC_VOL": new_data_reduce1['GSPC_VOL'].fillna(method='ffill'),
-                         "BRENT_PRICE": new_data_reduce1['BRENT_PRICE'].fillna(method='ffill'),
-                         "SP_DIVIDEND": new_data_reduce1['SP_DIVIDEND'].fillna(method='ffill'),
-                         "SP_EARNINGS": new_data_reduce1['SP_EARNINGS'].fillna(method='ffill'),
-                         "CPI": new_data_reduce1['CPI'].fillna(method='ffill'),
-                         "LONG_IR_RATE": new_data_reduce1['LONG_IR_RATE'].fillna(method='ffill'),
-                         "SP_REAL_PRICE": new_data_reduce1['SP_REAL_PRICE'].fillna(method='ffill'),
-                         "REAL_DIVIDEND": new_data_reduce1['REAL_DIVIDEND'].fillna(method='ffill'),
-                         "REAL_EARNING": new_data_reduce1['REAL_EARNING'].fillna(method='ffill'),
-                         "PE_RATIO": new_data_reduce1['PE_RATIO'].fillna(method='ffill'),
+                         #"BRENT_PRICE": new_data_reduce1['BRENT_PRICE'].fillna(method='ffill'),
+                         #"SP_DIVIDEND": new_data_reduce1['SP_DIVIDEND'].fillna(method='ffill'),
+                         #"SP_EARNINGS": new_data_reduce1['SP_EARNINGS'].fillna(method='ffill'),
+                         #"CPI": new_data_reduce1['CPI'].fillna(method='ffill'),
+                         #"LONG_IR_RATE": new_data_reduce1['LONG_IR_RATE'].fillna(method='ffill'),
+                         #"SP_REAL_PRICE": new_data_reduce1['SP_REAL_PRICE'].fillna(method='ffill'),
+                         #"REAL_DIVIDEND": new_data_reduce1['REAL_DIVIDEND'].fillna(method='ffill'),
+                         #"REAL_EARNING": new_data_reduce1['REAL_EARNING'].fillna(method='ffill'),
+                         #"PE_RATIO": new_data_reduce1['PE_RATIO'].fillna(method='ffill'),
                          "GSPC_CLOSE": new_data_reduce1['GSPC_CLOSE'].fillna(method='ffill')})
 
 # 4. Check data: null values

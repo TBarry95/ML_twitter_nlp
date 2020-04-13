@@ -8,13 +8,19 @@ import functions_nlp as fns
 import matplotlib.pyplot as plt
 import warnings
 warnings.simplefilter("ignore", DeprecationWarning)
+from scipy.stats.stats import pearsonr
+import statsmodels.api as sm
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model.logistic import _logistic_loss
+import seaborn as sns
 
 ##########################################################################
 # Extract:
 ##########################################################################
 
 # -- Read in Trump tweets:
-trump_tweets = pd.read_csv(r"C:\Users\btier\Documents\trump_tweets.csv")
+trump_tweets = pd.read_csv(r"C:\Users\btier\PycharmProjects\DataMining_ML_virt\trump_tweets.csv")
 trump_tweets.columns = ['SOURCE', 'FULL_TEXT', 'CREATED_AT', 'RETWEET_COUNT', 'FAV_COUNT', 'IS_RETWEET', 'ID_STR']
 trump_tweets['CREATED_AT'] = [str(i)[0:10] for i in trump_tweets['CREATED_AT']]
 
@@ -75,7 +81,6 @@ plt.title("Top 10 Words", fontsize=20)
 
 # -- K-Means clustering to find optimal K:
 
-
 # -- LDA:
 lda_output = fns.lda_model(trump_tweets, 5, 15)
 
@@ -93,97 +98,50 @@ trump_tweets = fns.get_sentiment_pa(trump_tweets)
 trump_tweets["SENTIMENT_1"].plot(kind='hist', legend=True)
 trump_tweets["SENTIMENT_PA"].plot(kind='hist', legend=True)
 
-# -- Get Average Sentiment for each day: Map/reduce?
-df_feature_1 = pd.DataFrame()
+# -- Get Average Sentiment for each date
+df_avg_sent = pd.DataFrame()
+data = trump_tweets.groupby('DATE_TIME')['SENTIMENT_1'].mean()
+count_tweets_day = trump_tweets.groupby('DATE_TIME')['SENTIMENT_1'].count()
+rt_per_day = trump_tweets.groupby('DATE_TIME')['RETWEET_COUNT'].sum()
+fav_per_day = trump_tweets.groupby('DATE_TIME')['FAV_COUNT'].sum()
+df_avg_sent['DATE'] = [i for i in data.index]
+df_avg_sent['AVG_DAILY_SENT'] = [i for i in data]
+df_avg_sent['PCT_CHG_SENT'] = df_avg_sent['AVG_DAILY_SENT'].pct_change()
+df_avg_sent['DIRECTION'] = ["UP" if i > 0 else "DOWN" for i in df_avg_sent['PCT_CHG_SENT']]
+df_avg_sent['TWEET_COUNT'] = [i for i in count_tweets_day]
+df_avg_sent['FAV_COUNT'] = [i for i in fav_per_day]
+df_avg_sent['RT_COUNT'] = [i for i in rt_per_day]
+df_avg_sent = df_avg_sent[len(df_avg_sent)-1300:]
 
-'''
-# -- Mapper: Key = date, value = sent.
-for sent in range(0,len(trump_tweets['SENTIMENT_1'])):
-    if trump_tweets['SENTIMENT_1'][sent] < 0:
-        value = -1
-        df_feature_1['SENTIMENT_1'].append(value)
-    elif trump_tweets['SENTIMENT_1'][sent] > 0:
-        value = 1
-        df_feature_1['SENTIMENT_1'].append(value)
-    elif trump_tweets['SENTIMENT_1'][sent] == 0:
-        value = 0
-        df_feature_1['SENTIMENT_1'].append(value)
-    df_feature_1['DATE_TIME'].append(key)
-    key = trump_tweets['DATE_TIME'][sent]
-    print(('%s\t%s') % (key, value))
+# -- Join prices
+all_data = pd.merge(df_avg_sent, gspc_df, how='left', left_on='DATE', right_on='Date')
+all_data = all_data[np.isnan(all_data['Close']) == False]
 
-# -- Reducer:
-last_date_key = None
-aggregate_sentiment = 0
-count_per_date = 0
-
-for sentiment in sys.stdin:
-    sentiment = sentiment.strip()  # if whitespace - removes
-    this_date_key, sentiment_value = sentiment.split()  # splits mapper by tab escaped
-    sentiment_value = float(sentiment_value)
-
-    if last_date_key == this_date_key:
-        count_per_date += 1
-        aggregate_sentiment += sentiment_value
-    else:
-        if last_date_key:
-            print(('%s\t%s\t%s') % (last_date_key, aggregate_sentiment / count_per_date, count_per_date))
-        aggregate_sentiment = sentiment_value
-        last_date_key = this_date_key
-        count_per_date = 1
-
-# -- Output the least popular / min count sentiment sentiment
-if last_date_key == this_date_key:
-    print(('%s\t%s\t%s') % (last_date_key, aggregate_sentiment / count_per_date, count_per_date))
-
-df_1 = [i for i in trump_tweets["DATE_TIME"]]
-for i in trump_tweets["SENTIMENT_1"]:
-    df_1.append(i)
-
-date = df_1[:int((len(df_1))/2)]
-text = df_1[int((len(df_1))/2):]
-
-
-df_pa = [i for i in trump_tweets["DATE_TIME"]]
-for i in trump_tweets["SENTIMENT_PA"]:
-    df_pa.append(i)
-
-'''
-##########################################
-# 3. Sentiment Analysis: Naive Bayes Classifier
-##########################################
-
-# -- Train data: Dataset of movie reviews:
-
+# -- Get correlation between Trump daily sentiment and stock price:
+corr = pearsonr(all_data['AVG_DAILY_SENT'],  all_data['Close'])[0]
 
 ##########################################
-# 4. Logistic Regression Model:
+# 3. Logistic Regression Model:
 ##########################################
-import statsmodels.api as sm
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model.logistic import _logistic_loss
 
-ind_vars_for_logit = trump_tweets[['SENTIMENT_1','SENTIMENT_PA']]
-ind_vars_for_logit2 = trump_tweets[['SENTIMENT_PA']]
-dep_var = trump_tweets['SP_DIRECTION']
+all_data1 = all_data.dropna()
+all_data1 = all_data1.replace([np.inf, -np.inf], np.nan)
+all_data1 = all_data1.dropna()
+ind_vars_for_logit = all_data1[['AVG_DAILY_SENT', 'PCT_CHG_SENT', 'TWEET_COUNT']]
+#ind_vars_for_logit = all_data1[['AVG_DAILY_SENT', 'PCT_CHG_SENT', 'TWEET_COUNT', 'FAV_COUNT', 'RT_COUNT']]
+dep_var = all_data1['DIRECTION']
 
-X_train, X_test, y_train, y_test = train_test_split(ind_vars_for_logit2, dep_var, test_size=0.3, random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(ind_vars_for_logit, dep_var, test_size=0.3, random_state=0)
 
 logit_model = LogisticRegression()
 logit_model.fit(X_train, y_train)
-pred = logit_model.predict(X_test) # results are poor due to skewed data....
+pred = logit_model.predict(X_test)
 
-# create training set of balanced UP and DOWN
-plt.figure()
-num_up = len(trump_tweets['SP_DIRECTION'][trump_tweets['SP_DIRECTION'] == "UP"])
-num_down = len(trump_tweets['SP_DIRECTION'][trump_tweets['SP_DIRECTION'] == "DOWN"])
+logit_model.score(X_test, y_test)
 
 ##########################################
 # 4. Correlation with Stock Market:
 ##########################################
-
-import seaborn as sns
 
 # -- Plot: Correlation Matrix Plot:
 corr_mx = trump_tweets[['RETWEET_COUNT', 'FAV_COUNT','SP_CLOSE','SP_PCT_CHANGE','SENTIMENT_1', 'SENTIMENT_PA']].corr()
