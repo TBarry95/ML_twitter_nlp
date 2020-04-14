@@ -68,86 +68,6 @@ def get_quandl(ticker):
     data = quandl.get(ticker, authtoken=api_key)
     return data
 
-def get_data_alpha_v2(ticker):
-    api_key = '1TKL74QWO8OFMHQM'
-    ts = TimeSeries(key=api_key, output_format='json')
-    raw_price_data, meta_data = ts.get_daily(symbol=ticker, outputsize='full')
-    return [raw_price_data, meta_data]
-
-def get_data_alphav_intraday(ticker):
-    api_key = '1TKL74QWO8OFMHQM'
-    ts = TimeSeries(key=api_key, output_format='json')
-    raw_price_data, meta_data = ts.get_intraday(symbol=ticker, interval="60min")
-    return [raw_price_data, meta_data]
-
-def alpha_v_to_df(ticker_dict):
-    dates = [x[0] for x in ticker_dict[0].items()]
-    open = [float(x[1]['1. open']) for x in ticker_dict[0].items()]
-    close  = [float(x[1]['4. close']) for x in ticker_dict[0].items()]
-    high  = [float(x[1]['2. high']) for x in ticker_dict[0].items()]
-    low  = [float(x[1]['3. low']) for x in ticker_dict[0].items()]
-    volume  = [x[1]['5. volume'] for x in ticker_dict[0].items()]
-    ticker_lst = []
-    for x in range(0, len(open)):
-        ticker_lst.append(ticker_dict[1]['2. Symbol'])
-    df = pd.DataFrame({"DATE": dates, "TICKER": ticker_lst, "OPEN_PRICE": open, "CLOSE_PRICE": close,
-                       "DAILY_HIGH": high, "DAILY_LOW": low, "TRADE_VOLUME": volume})
-    #df = df.iloc[::-1]
-    df = df.reindex(index=df.index[::-1])
-    pct_change = df.CLOSE_PRICE.pct_change(periods=1)
-    df = pd.DataFrame({"DATE": dates, "OPEN_PRICE": open, "CLOSE_PRICE": close,
-                       "PCT_CHANGE": pct_change, "DAILY_HIGH": high, "DAILY_LOW": low, "TRADE_VOLUME": volume})
-    df.columns = ['DATE', 'SPX_OPEN_PRICE', 'SPX_CLOSE_PRICE', 'SPX_PCT_CHANGE', 'SPX_DAILY_HIGH', 'SPX_DAILY_LOW', 'SPX_TRADE_VOLUME']
-    return df
-
-def alpha_v_to_df_add_col(ticker_dict):
-    dates = [x[0] for x in ticker_dict[0].items()]
-    open = [float(x[1]['1. open']) for x in ticker_dict[0].items()]
-    close  = [float(x[1]['4. close']) for x in ticker_dict[0].items()]
-    high  = [float(x[1]['2. high']) for x in ticker_dict[0].items()]
-    low  = [float(x[1]['3. low']) for x in ticker_dict[0].items()]
-    volume  = [x[1]['5. volume'] for x in ticker_dict[0].items()]
-    ticker_lst = []
-    for x in range(0, len(open)):
-        ticker_lst.append(ticker_dict[1]['2. Symbol'])
-    df = pd.DataFrame({"DATE": dates, "TICKER": ticker_lst, "OPEN_PRICE": open, "CLOSE_PRICE": close,
-                       "DAILY_HIGH": high, "DAILY_LOW": low, "TRADE_VOLUME": volume})
-    #df = df.iloc[::-1]
-    df = df.reindex(index=df.index[::-1])
-    pct_change = df.CLOSE_PRICE.pct_change(periods=1)
-    df = pd.DataFrame({"DATE": dates, "TICKER": ticker_lst, "OPEN_PRICE": open, "CLOSE_PRICE": close,
-                       "CLOSE_PCT_CHANGE": pct_change, "DAILY_HIGH": high, "DAILY_LOW": low, "TRADE_VOLUME": volume})
-
-    # add moving avgs: 5-200
-    moving_avg_donn_channel = [5, 10, 20, 50, 100, 200]
-    for i in moving_avg_donn_channel:
-        ind_name = "SMA_%d" % (i)
-        df[ind_name] = df['CLOSE_PRICE'].rolling(i).mean()
-    # add bollinger bands: periods:20, 10; standard deviation: 2,1
-    df['BOLLINGER_20PD_2STD_UP'] = df['CLOSE_PRICE'].rolling(20).mean() + 2*df['CLOSE_PRICE'].rolling(20).std()
-    df['BOLLINGER_20PD_2STD_DN'] = df['CLOSE_PRICE'].rolling(20).mean() - 2*df['CLOSE_PRICE'].rolling(20).std()
-
-    df['BOLLINGER_20PD_1STD_UP'] = df['CLOSE_PRICE'].rolling(20).mean() + 1*df['CLOSE_PRICE'].rolling(20).std()
-    df['BOLLINGER_20PD_1STD_DN'] = df['CLOSE_PRICE'].rolling(20).mean() - 1*df['CLOSE_PRICE'].rolling(20).std()
-
-    df['BOLLINGER_10PD_2STD_UP'] = df['CLOSE_PRICE'].rolling(10).mean() + 2*df['CLOSE_PRICE'].rolling(20).std()
-    df['BOLLINGER_10PD_2STD_DN'] = df['CLOSE_PRICE'].rolling(10).mean() - 2*df['CLOSE_PRICE'].rolling(20).std()
-
-    df['BOLLINGER_10PD_1STD_UP'] = df['CLOSE_PRICE'].rolling(10).mean() + 1*df['CLOSE_PRICE'].rolling(20).std()
-    df['BOLLINGER_10PD_1STD_DN'] = df['CLOSE_PRICE'].rolling(10).mean() - 1*df['CLOSE_PRICE'].rolling(20).std()
-
-    # add donchian channels: 5-200
-    for i in moving_avg_donn_channel:
-        up = "DONCHIAN_CH_UP_%d" % (i)
-        down = "DONCHIAN_CH_DN_%d" % (i)
-        df[up] = df['DAILY_HIGH'].rolling(i).max()
-        df[down] = df['DAILY_LOW'].rolling(i).min()
-
-    # get price which we need to predict: eg. 1 day, 2 day, 3 day etc
-    # df['TARGET_PRICE'] = df['CLOSE_PRICE'].shift(-1)
-
-    return df
-
 def get_trump_json_data(local_filepath):
     with open(local_filepath, encoding="utf8") as json_trump_tweets:
         data = json.load(json_trump_tweets)
@@ -172,7 +92,6 @@ def get_tweet_pgs(user_name, num_pgs):
     for i in tweets:
         tweetslist.append(twt.AnalyseTweetsClass().dataframe_tweets(i))
     return tweetslist
-
 
 def get_tweets_hashtag(num_pgs, hashtag):
     tweets = twt.TwitterClientClass().get_hashtag_tweets(num_pgs, hashtag)
@@ -226,8 +145,6 @@ def elbow_graph(list, df_all_tweets):
         km = KMeans(i).fit(count_data)
         inertia.append(km.inertia_)
     return pd.DataFrame({"CLUSTERS": num_cluster, "DISTORTION": inertia})
-
-#clusters_num =  elbow_graph([100,200,400,600,800,1000,1300,1600,1900,2400,2800], df_all_tweets)
 
 def clean_text_words1(trump_df):
     # trump_df_cln = trump_df.drop(
@@ -328,27 +245,8 @@ def get_sentiment_nbayes(trump_df_clean):
     trump_df_clean['SENTIMENT_NB'] = sentiment
     return trump_df_clean
 
-def map_reduce_data(trump_tweets):
-    # 2. reduce key,values by date and find average score per date:
-    last_date_key = None
-    aggregate_sentiment = 0
-    count_per_date = 0
-    for sentiment in range(0, len(trump_tweets["SENTIMENT_PA"])):
-        this_date_key, sentiment_value = trump_tweets["DATE_TIME"][i], trump_tweets["SENTIMENT_PA"][i]
-        sentiment_value = float(sentiment_value)
-        if last_date_key == this_date_key:
-            count_per_date += 1
-            aggregate_sentiment += sentiment_value
-        else:
-            if last_date_key:
-                print(('%s\t%s\t%s') % (last_date_key, aggregate_sentiment / count_per_date, count_per_date))
-            aggregate_sentiment = sentiment_value
-            last_date_key = this_date_key
-            count_per_date = 1
-    # -- Output the least popular / min count sentiment sentiment
-    if last_date_key == this_date_key:
-        print(('%s\t%s\t%s') % (last_date_key, aggregate_sentiment / count_per_date, count_per_date))
-
-
+# # # # # # # # # # # # #
+# Predictions:
+# # # # # # # # # # # # #
 
 

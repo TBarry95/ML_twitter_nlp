@@ -1,10 +1,13 @@
-# pip install textblob
+# Des: Analysis script of Donald Trumps tweets in order to predict stock price direction
+#      using sentiment analysis, correlation matrix, and logistic regression.
+# By: Tiernan Barry - x19141840 (NCI) - Data Mining and Machine Learning
+
+# Libraries:
 import Twitter_API_Module as twt
 import numpy as np
 import pandas as pd
 import re
 import missingno as msno
-import functions_nlp as fns
 import matplotlib.pyplot as plt
 import warnings
 warnings.simplefilter("ignore", DeprecationWarning)
@@ -14,6 +17,9 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model.logistic import _logistic_loss
 import seaborn as sns
+
+# Source files (functions):
+import functions_nlp as fns
 
 ##########################################################################
 # Extract:
@@ -80,8 +86,6 @@ plt.title("Top 10 Words", fontsize=20)'''
 
 # -- Lexicon-based sentiment (-1,0,1):
 trump_tweets["SENTIMENT_1"] = np.array([twt.AnalyseTweetsClass().sentiment_analyser(i) for i in trump_tweets["PROCESSED_TEXT"]])
-
-# -- Lexicon-based sentiment (-1:1):
 trump_tweets = fns.get_sentiment_pa(trump_tweets)
 
 # -- Plot:
@@ -199,3 +203,9 @@ def get_all_logistic_regression(data):
         df['ACCURACY'].append(accuracy)
         return df
 '''
+
+##########################################
+# 3. Logistic Regression: Predict Stock price Direction
+##########################################
+
+
