@@ -14,6 +14,8 @@ import warnings
 warnings.simplefilter("ignore", DeprecationWarning)
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
+from matplotlib import pyplot as plt
+from sklearn.linear_model import LinearRegression
 
 # Source files (functions):
 import functions_nlp as fns
@@ -124,4 +126,25 @@ out1 = logistic_regression(df_features, ['TWEET_COUNT_DAY', 'LEN_TWEET_SUM', 'ME
 ##########################################
 # 2. # 4. Linear Regression: Predict Stock price
 ##########################################
+df_features.columns
+
+lr_model = LinearRegression()
+
+df_features = df_features.replace([np.inf, -np.inf], np.nan)
+df_features = df_features.dropna()
+
+dep_var = df_features['Close']
+
+# -- All variables + clean:
+vars_for_logit = df_features[['MEAN_SENT1', 'MEAN_SENT2', 'MEAN_SENT1_PCT', 'MEAN_SENT2_PCT',
+                             'FAV_COUNT_DAY', 'RT_COUNT_DAY', 'TWEET_COUNT_DAY', 'LEN_TWEET_SUM',
+                             'FOLLOWERS']]
+
+# -- Run Logistic Regression model 1:
+X_train1, X_test1, y_train1, y_test1 = train_test_split(vars_for_logit, dep_var, test_size=0.3, random_state=0)
+lr_model.fit(X_train1, y_train1)
+pred = lr_model.predict(X_test1)
+
+lr_model.score(X_test1, y_test1)
+
 

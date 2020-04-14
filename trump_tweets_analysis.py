@@ -205,7 +205,7 @@ def get_all_logistic_regression(data):
 '''
 
 ##########################################
-# 3. Logistic Regression: Predict Stock price Direction
+# 3. Linear Regression: Predict Stock price
 ##########################################
 
 
