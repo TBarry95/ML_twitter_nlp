@@ -124,9 +124,8 @@ def logistic_regression(data, list_of_features):
 out1 = logistic_regression(df_features, ['TWEET_COUNT_DAY', 'LEN_TWEET_SUM', 'MEAN_SENT1_PCT'])
 
 ##########################################
-# 2. # 4. Linear Regression: Predict Stock price
+# 4. Linear Regression: Predict Stock price
 ##########################################
-df_features.columns
 
 lr_model = LinearRegression()
 
