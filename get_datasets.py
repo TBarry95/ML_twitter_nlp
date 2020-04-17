@@ -26,15 +26,10 @@ twitter_pgs = ["CNN", "BBCWorld", "BBCBreaking", "BBCNews", "ABC", "Independent"
                "BreakingNews", "cnnbrk", "WSJ", "Reuters", "SkyNews", "CBCAlerts"]
 
 # tweets_list = fns.get_tweets_list(twitter_pgs, 120)
-
 # df_all_tweets = fns.tweets_to_df(tweets_list)
-
 # df_all_tweets = df_all_tweets.sort_values(by='DATE_TIME', ascending=0)
-
 # df_all_tweets = df_all_tweets.drop_duplicates()
-
 # df_all_tweets.to_csv(r"C:\Users\btier\Documents\twitter_mass_media_data_2.csv", index= False)
-
 # df_all_tweets = pd.read_csv()
 
 ######################################################################################
@@ -47,12 +42,48 @@ gspc_df = pd.read_csv(r"C:\Users\btier\Downloads\^GSPC.csv")
 gspc_df.columns = ['DATE', 'GSPC_OPEN', 'GSPC_HIGH', 'GSPC_LOW', 'GSPC_CLOSE', 'GSPC_ADJ_CLOSE', 'GSPC_VOL']
 
 # 2. Get predictors:
-
-# -- SP Data: https://datahub.io
-#sp_data = pd.read_csv(r"C:\Users\btier\Downloads\data_csv.csv")
-#del sp_data['SP500']
-#sp_data.columns = ['DATE', 'SP_DIVIDEND', 'SP_EARNINGS', 'CPI', 'LONG_IR_RATE', 'SP_REAL_PRICE', 'REAL_DIVIDEND',
-#                   'REAL_EARNING', 'PE_RATIO']
+PCAR = pd.read_csv(r"C:\Users\btier\Downloads\PCAR.csv")[['Date', 'Close', 'Volume']]
+PCAR.columns = ['DATE', 'PCAR_CLOSE', 'PCAR_VOL']
+WMT = pd.read_csv(r"C:\Users\btier\Downloads\WMT.csv")[['Date', 'Close', 'Volume']]
+WMT.columns = ['DATE', 'WMT_CLOSE', 'WMT_VOL']
+SWK = pd.read_csv(r"C:\Users\btier\Downloads\SWK.csv")[['Date', 'Close', 'Volume']]
+SWK.columns = ['DATE', 'SWK_CLOSE', 'SWK_VOL']
+BSX = pd.read_csv(r"C:\Users\btier\Downloads\BSX.csv")[['Date', 'Close', 'Volume']]
+BSX.columns = ['DATE', 'BSX_CLOSE', 'BSX_VOL']
+NI = pd.read_csv(r"C:\Users\btier\Downloads\NI.csv")[['Date', 'Close', 'Volume']]
+NI.columns = ['DATE', 'NI_CLOSE', 'NI_VOL']
+FNMA = pd.read_csv(r"C:\Users\btier\Downloads\FNMA.csv")[['Date', 'Close', 'Volume']]
+FNMA.columns = ['DATE', 'FNMA_CLOSE', 'FNMA_VOL']
+VFC = pd.read_csv(r"C:\Users\btier\Downloads\VFC.csv")[['Date', 'Close', 'Volume']]
+VFC.columns = ['DATE', 'VFC_CLOSE', 'VFC_VOL']
+TXT = pd.read_csv(r"C:\Users\btier\Downloads\TXT.csv")[['Date', 'Close', 'Volume']]
+TXT.columns = ['DATE', 'TXT_CLOSE', 'TXT_VOL']
+TGT = pd.read_csv(r"C:\Users\btier\Downloads\TGT.csv")[['Date', 'Close', 'Volume']]
+TGT.columns = ['DATE', 'TGT_CLOSE', 'TGT_VOL']
+INTC = pd.read_csv(r"C:\Users\btier\Downloads\INTC.csv")[['Date', 'Close', 'Volume']]
+INTC.columns = ['DATE', 'INTC_CLOSE', 'INTC_VOL']
+WFC = pd.read_csv(r"C:\Users\btier\Downloads\WFC.csv")[['Date', 'Close', 'Volume']]
+WFC.columns = ['DATE', 'WFC_CLOSE', 'WFC_VOL']
+DIS = pd.read_csv(r"C:\Users\btier\Downloads\DIS.csv")[['Date', 'Close', 'Volume']]
+DIS.columns = ['DATE', 'DIS_CLOSE', 'DIS_VOL']
+NEE = pd.read_csv(r"C:\Users\btier\Downloads\NEE.csv")[['Date', 'Close', 'Volume']]
+NEE.columns = ['DATE', 'NEE_CLOSE', 'NEE_VOL']
+TAP = pd.read_csv(r"C:\Users\btier\Downloads\TAP.csv")[['Date', 'Close', 'Volume']]
+TAP.columns = ['DATE', 'TAP_CLOSE', 'TAP_VOL']
+LNC = pd.read_csv(r"C:\Users\btier\Downloads\LNC.csv")[['Date', 'Close', 'Volume']]
+LNC.columns = ['DATE', 'LNC_CLOSE', 'LNC_VOL']
+DUK = pd.read_csv(r"C:\Users\btier\Downloads\DUK.csv")[['Date', 'Close', 'Volume']]
+DUK.columns = ['DATE', 'DUK_CLOSE', 'DUK_VOL']
+CI = pd.read_csv(r"C:\Users\btier\Downloads\CI.csv")[['Date', 'Close', 'Volume']]
+CI.columns = ['DATE', 'CI_CLOSE', 'CI_VOL']
+BAC = pd.read_csv(r"C:\Users\btier\Downloads\BAC.csv")[['Date', 'Close', 'Volume']]
+BAC.columns = ['DATE', 'BAC_CLOSE', 'BAC_VOL']
+IFF = pd.read_csv(r"C:\Users\btier\Downloads\IFF.csv")[['Date', 'Close', 'Volume']]
+IFF.columns = ['DATE', 'IFF_CLOSE', 'IFF_VOL']
+JPM = pd.read_csv(r"C:\Users\btier\Downloads\JPM.csv")[['Date', 'Close', 'Volume']]
+JPM.columns = ['DATE', 'JPM_CLOSE', 'JPM_VOL']
+WMB = pd.read_csv(r"C:\Users\btier\Downloads\WMB.csv")[['Date', 'Close', 'Volume']]
+WMB.columns = ['DATE', 'WMB_CLOSE', 'WMB_VOL']
 
 # -- BRENT: https://datahub.io/core/oil-prices#resource-brent-daily
 brent_df = pd.read_csv(r"C:\Users\btier\Downloads\brent-daily_csv.csv")
@@ -123,6 +154,7 @@ house_price = fns.get_quandl("YALE/RHPI")
 house_price = house_price.reset_index()
 house_price.columns = ['DATE', 'HOUSE_PX_INX_REAL']
 
+
 # -- MERGE DATASETS:
 all_data = pd.merge(gold_df, silver_df, how='left', left_on='DATE', right_on='DATE')
 all_data = pd.merge(all_data, platinum_future_df, how='left', left_on='DATE', right_on='DATE')
@@ -138,9 +170,29 @@ all_data = pd.merge(all_data, confidence_inx_indv, how='left', left_on='DATE', r
 all_data = pd.merge(all_data, house_price, how='left', left_on='DATE', right_on='DATE')
 all_data['DATE'] = [str(i)[0:10] for i in all_data['DATE']]
 all_data = pd.merge(all_data, brent_df, how='left', left_on='DATE', right_on='DATE')
-#all_data = pd.merge(all_data, sp_data, how='left', left_on='DATE', right_on='DATE')
 all_data = pd.merge(all_data, gspc_df, how='left', left_on='DATE', right_on='DATE')
 
+all_data = pd.merge(all_data, PCAR, how='left', left_on='DATE', right_on='DATE')
+all_data = pd.merge(all_data, WMT, how='left', left_on='DATE', right_on='DATE')
+all_data = pd.merge(all_data, SWK, how='left', left_on='DATE', right_on='DATE')
+all_data = pd.merge(all_data, BSX, how='left', left_on='DATE', right_on='DATE')
+all_data = pd.merge(all_data, NI, how='left', left_on='DATE', right_on='DATE')
+all_data = pd.merge(all_data, FNMA, how='left', left_on='DATE', right_on='DATE')
+all_data = pd.merge(all_data, VFC, how='left', left_on='DATE', right_on='DATE')
+all_data = pd.merge(all_data, TXT, how='left', left_on='DATE', right_on='DATE')
+all_data = pd.merge(all_data, INTC, how='left', left_on='DATE', right_on='DATE')
+all_data = pd.merge(all_data, WFC, how='left', left_on='DATE', right_on='DATE')
+all_data = pd.merge(all_data, DIS, how='left', left_on='DATE', right_on='DATE')
+all_data = pd.merge(all_data, NEE, how='left', left_on='DATE', right_on='DATE')
+all_data = pd.merge(all_data, TAP, how='left', left_on='DATE', right_on='DATE')
+all_data = pd.merge(all_data, LNC, how='left', left_on='DATE', right_on='DATE')
+all_data = pd.merge(all_data, DUK, how='left', left_on='DATE', right_on='DATE')
+all_data = pd.merge(all_data, TGT, how='left', left_on='DATE', right_on='DATE')
+all_data = pd.merge(all_data, CI, how='left', left_on='DATE', right_on='DATE')
+all_data = pd.merge(all_data, BAC, how='left', left_on='DATE', right_on='DATE')
+all_data = pd.merge(all_data, IFF, how='left', left_on='DATE', right_on='DATE')
+all_data = pd.merge(all_data, JPM, how='left', left_on='DATE', right_on='DATE')
+all_data = pd.merge(all_data, WMB, how='left', left_on='DATE', right_on='DATE')
 all_data.to_csv(r"C:\Users\btier\Documents\economic_data.csv", index=False)
 
 '''

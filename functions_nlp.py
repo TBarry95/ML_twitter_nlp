@@ -31,6 +31,25 @@ import os
 # # # # # # # # # # # # #
 # Extract:
 # # # # # # # # # # # # #
+
+def get_data_alpha_v(ticker):
+    api_key = '1TKL74QWO8OFMHQM'
+    ts = TimeSeries(key=api_key, output_format='json')
+    raw_price_data, meta_data = ts.get_daily(symbol=ticker, outputsize='full')
+    ticker_dates = []
+    ticker_close = []
+    ticker_dict = []
+    for i in raw_price_data.items():
+        ticker_dict.append(i[1])
+        ticker_dates.append(i[0])
+    for i in ticker_dict:
+        ticker_close.append(float(i.get('4. close')))
+    df = pd.DataFrame()
+    df['DATE'] = ticker_dates
+    df['CLOSE_PX'] = ticker_close
+    #ticker_raw_data = {"Date": ticker_dates, "Close Price": ticker_close}
+    return df
+
 def get_tweets_list(list_of_twitter_accs, num_pages):
     tweet_list = []
     for i in list_of_twitter_accs:

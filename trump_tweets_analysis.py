@@ -67,7 +67,8 @@ word_cloud = fns.get_wordcloud(trump_tweets, r"C:\Users\btier\Documents\trump_wo
 # 1. Get Sentiment: Lexicon-based polarity
 # 2. Correlation Matrix: Tweet Sentiment and Stock price (and more)
 # 3. Logistic Regression: Predict Stock price Direction
-# 3. Linear Regression: Predict Stock prices
+# 4. Linear Regression: Predict Stock prices
+# 5. Random Forest Regression: Predict Stock prices
 ##########################################################################
 
 ##########################################
@@ -231,9 +232,6 @@ del X_train2['DATE_TIME']
 X_train2 = X_train2[['MEAN_DAILY_SENT1', 'MEAN_DAILY_SENT2', 'TWEET_COUNT', 'RT_COUNT']]
 
 X_test2 = X_test2[['MEAN_DAILY_SENT1', 'MEAN_DAILY_SENT2', 'TWEET_COUNT','RT_COUNT']]
-
-'''X_train2 = scaler.fit_transform(X_train2)
-X_test2 = scaler.fit_transform(X_test2)'''
 
 # Instantiate model with 1000 decision trees
 rf = RandomForestRegressor(n_estimators = 1000, random_state = 0)
