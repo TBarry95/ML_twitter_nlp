@@ -208,7 +208,7 @@ plt.legend([plt1, plt2], ["Predicted Price", "Actual Price"])
 ##########################################
 # Possible Features: 'MEAN_DAILY_SENT1', 'MEAN_DAILY_SENT2', 'PCT_CHG_SENT1', 'PCT_CHG_SENT2',
 #                            'DIRECTION1', 'DIRECTION2', 'TWEET_COUNT', RT_COUNT
-# Import the model we are using
+
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler
 scaler = StandardScaler()
