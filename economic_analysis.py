@@ -5,7 +5,6 @@
 # Libraries and source scripts:
 import numpy as np
 from sklearn.model_selection import train_test_split
-import missingno as msno
 import pandas as pd
 import warnings
 warnings.simplefilter("ignore")
@@ -15,47 +14,17 @@ from matplotlib import pyplot as plt
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import scale
 from sklearn.metrics import *
-import functools
-import statsmodels.api as sm
 import seaborn as sns
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 from matplotlib.pyplot import ion
 ion() # enables interactive mode
 
 ##########################################################################
-# A. EXTRACT: Read in raw dataset as sourced from get_datasets.py
+# A. EXTRACT: Read in cleaned dataset
 ##########################################################################
-all_data = pd.read_csv(r"C:\Users\btier\Documents\economic_data.csv")
+all_data = pd.read_csv(r".\quant_data_cleaned.csv")
 
-##########################################################################
-# B. TRANSFORM: Clean data and prepare for analysis
-##########################################################################
-
-###############################################
-# 1. Check data: null values
-###############################################
-msno.matrix(all_data, figsize= (50,30))
-# -- Reduce columns:
-new_data = all_data.iloc[:, [0,1,2,3,4,7,8,10,11,12,13,15,16,17,27,28,30,40,42,43,44,45,46,47,48,49,50,51,54,55,56,57,
-                             58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87]]
-
-msno.matrix(new_data)
-new_data_reduce1 = new_data[len(new_data['WMB_VOL'])-len(new_data['WMB_VOL'][new_data['WMB_VOL'].notna()]):len(new_data['WMB_VOL'])]
-
-msno.matrix(new_data_reduce1)
-new_data_reduce2 = new_data_reduce1.fillna(method='ffill')
-
-msno.matrix(new_data_reduce2)
-
-###############################################
-# Impute values: Back fill: Appropriate for stock timeseries data
-###############################################
-new_data_reduce3 = new_data_reduce2
-
-# -- Check data: clean dataset:
-msno.matrix(new_data_reduce3)
-sns.heatmap(new_data_reduce3.isnull(), cbar=False)
-new_data_reduce3.to_csv(r"C:\Users\btier\Documents\new_data_reduce3.csv", index=False)
+new_data_reduce3 = all_data
 
 ######################################################################################
 # C. ANALYSIS:
@@ -73,7 +42,6 @@ new_data_reduce3.to_csv(r"C:\Users\btier\Documents\new_data_reduce3.csv", index=
 #########################################################
 # 1. Explore Dataset:
 #########################################################
-sns.set(style="white")
 
 ###############################################
 # Prepare data: Seperate dependent and independent variables
@@ -88,6 +56,7 @@ del new_data_reduce3['GSPC_VOL']
 ###############################################
 # Plot: Correlation Matrix Plot:
 ###############################################
+sns.set(style="white")
 
 corr_mx = new_data_reduce3.corr()
 mask_values = np.triu(np.ones_like(corr_mx, dtype=np.bool))
@@ -120,18 +89,18 @@ print("##########################################################")
 # 2. Split datasets:
 #########################################################
 
-'''# -- Extract validation subset: Keeping for last - never tested on
-validation_data = new_data_reduce3[int(len(new_data_reduce3)*0.96):]
-validation_gspc_px = gspc_px[int(len(gspc_px)*0.96):]
+# -- Extract validation subset: Keeping for last - never tested on
+validation_data = new_data_reduce3[int(len(new_data_reduce3)*0.99):]
+validation_gspc_px = gspc_px[int(len(gspc_px)*0.99):]
 # -- Test / Train split:
-non_validation_data = new_data_reduce3[:int(len(new_data_reduce3)*0.96)]
-non_validation_gspc = gspc_px[:int(len(gspc_px)*0.96)]
+non_validation_data = new_data_reduce3[:int(len(new_data_reduce3)*0.99)]
+non_validation_gspc = gspc_px[:int(len(gspc_px)*0.99)]
 
 data_train, data_test, gspc_px_train, gspc_px_test = train_test_split(non_validation_data, non_validation_gspc, test_size=0.2, random_state=0, shuffle=True)
 val_date = validation_data['DATE']
-del validation_data['DATE']'''
-data_train, data_test, gspc_px_train, gspc_px_test = train_test_split(new_data_reduce3, gspc_px, test_size=0.2, random_state=0, shuffle=True)
-
+del validation_data['DATE']
+'''data_train, data_test, gspc_px_train, gspc_px_test = train_test_split(new_data_reduce3, gspc_px, test_size=0.2, random_state=0, shuffle=True)
+'''
 train_date = data_train['DATE']
 test_date = data_test['DATE']
 del data_train['DATE']
@@ -154,7 +123,7 @@ lr_model_all_vars.fit(data_train, gspc_px_train)
 predictions_test = lr_model_all_vars.predict(data_test)
 
 # -- Find Metrics and Visualise:
-print("# -- OLS Test Results: All Variables -- #")
+print("# -- Test Results - OLS: All 56 Variables  -- #")
 print('Mean Squared Error:', mean_squared_error(gspc_px_test, predictions_test))
 print('Mean Absolute Error:', mean_absolute_error(gspc_px_test, predictions_test))
 print('Root Mean Squared Error:', np.sqrt(mean_squared_error(gspc_px_test, predictions_test)))
@@ -169,8 +138,14 @@ lr_model_vif_vars = LinearRegression()
 lr_model_vif_vars.fit(data_train[[i for i in vif_factors]], gspc_px_train)
 prediction_vif = lr_model_vif_vars.predict(data_test[[i for i in vif_factors]])
 
+print("# -- Strong results but too many variables, need to reduce dimensions:  -- #")
+print("# -- 1. Using VIF variables  -- #")
+print("# -- 2. Using PCA variables  -- #")
+print("##########################################################")
+print("##########################################################")
+
 # -- Find Metrics and Visualise:
-print("# -- OLS VIF Test Results: VIF Variables -- #")
+print("# -- Test Results - OLS: VIF Variables -- #")
 print('Mean Squared Error:', mean_squared_error(gspc_px_test, prediction_vif))
 print('Mean Absolute Error:', mean_absolute_error(gspc_px_test, prediction_vif))
 print('Root Mean Squared Error:', np.sqrt(mean_squared_error(gspc_px_test, prediction_vif)))
@@ -263,18 +238,15 @@ plt.show()
 pca3 = PCA()
 data_reduced_train = pca3.fit_transform(scale(data_train))
 data_reduced_test = pca3.fit_transform(scale(data_test))
-
 # -- Initialise LR model
 lr_model_pca = LinearRegression()
-
 # -- Fit LR model: 6 PC's based on Elbow graph
 lr_model_pca.fit(data_reduced_train[:,:10], gspc_px_train)
-
 # -- Run model:
 predictions_2 = lr_model_pca.predict(data_reduced_test[:,:10])
 
 # -- Find Metrics and Visualise:
-print("# -- PCR Test Results: 10 PCA Variables -- #")
+print("# -- Test Results - PCR: 10 PCA Variables -- #")
 print('Mean Squared Error:', mean_squared_error(gspc_px_test, predictions_2))
 print('Mean Absolute Error:', mean_absolute_error(gspc_px_test, predictions_2))
 print('Root Mean Squared Error:', np.sqrt(mean_squared_error(gspc_px_test, predictions_2)))
@@ -282,6 +254,7 @@ print('R-Squared:', r2_score(gspc_px_test, predictions_2))
 print('Median Absolute Error:', median_absolute_error(gspc_px_test, predictions_2))
 print("##########################################################")
 print("##########################################################")
+
 # -- Print Equation:
 intercept = lr_model_pca.intercept_
 coefs = lr_model_pca.coef_
@@ -296,6 +269,36 @@ print("##########################################################")
 df_compare = pd.DataFrame({'ACTUAL_PRICE': gspc_px_test, 'PREDICTED_PRICE': predictions_2.flatten()})
 # print(df_compare.head(30))
 
+
+# -- Initialise PCA class
+pca_1pc = PCA()
+data_reduced_train_1pc = pca_1pc.fit_transform(scale(data_train))
+data_reduced_test_1pc = pca_1pc.fit_transform(scale(data_test))
+# -- Initialise LR model
+lr_model_pca_1pc = LinearRegression()
+# -- Fit LR model: 6 PC's based on Elbow graph
+lr_model_pca_1pc.fit(data_reduced_train[:,:1], gspc_px_train)
+# -- Run model:
+predictions_2_1pc = lr_model_pca_1pc.predict(data_reduced_test[:,:1])
+
+# -- Find Metrics and Visualise:
+print("# -- Test Results - PCR: 1 PCA Variables -- #")
+print('Mean Squared Error:', mean_squared_error(gspc_px_test, predictions_2_1pc))
+print('Mean Absolute Error:', mean_absolute_error(gspc_px_test, predictions_2_1pc))
+print('Root Mean Squared Error:', np.sqrt(mean_squared_error(gspc_px_test, predictions_2_1pc)))
+print('R-Squared:', r2_score(gspc_px_test, predictions_2_1pc))
+print('Median Absolute Error:', median_absolute_error(gspc_px_test, predictions_2_1pc))
+print("##########################################################")
+print("##########################################################")
+'''
+sns.residplot(data_reduced_test[:,:1], gspc_px_test)
+
+plt.figure()
+# Plot outputs
+plt.scatter(data_reduced_test[:,:1], gspc_px_test,  color='black')
+plt.plot(predictions_2_1pc, gspc_px_test, color='blue', linewidth=3)
+plt.show()
+'''
 #########################################################
 # PCR: Principal Component Regression: All data (do not apply pca - already done to all data)
 #########################################################
@@ -314,7 +317,7 @@ lr_model_pca_all.fit(data_train_all[:,:10], gspc_px_train_all)
 predall = lr_model_pca_all.predict(data_test_all[:,:10])
 
 # -- Find Metrics and Visualise:
-print("# -- PCR Test Results 2 (all data): 10 PCA Variables -- #")
+print("# -- Test Results - PCR 2 (all data): 10 PCA Variables -- #")
 print('Mean Squared Error:', mean_squared_error(gspc_px_test_all, predall))
 print('Mean Absolute Error:', mean_absolute_error(gspc_px_test_all, predall))
 print('Root Mean Squared Error:', np.sqrt(mean_squared_error(gspc_px_test_all, predall)))
@@ -329,10 +332,10 @@ print("##########################################################")
 ###############################################
 # 1. Validate OLS regression using ALL predictors:
 ###############################################
-'''val_all_pred = lr_model_all_vars.predict(validation_data)
+val_all_pred = lr_model_all_vars.predict(validation_data)
 
 # -- Find Metrics and Visualise:
-print("# -- OLS Validation Results: All Variables -- #")
+print("# -- Validation Results - OLS: All Variables -- #")
 print('Mean Squared Error:', mean_squared_error(validation_gspc_px, val_all_pred))
 print('Mean Absolute Error:',  mean_absolute_error(validation_gspc_px, val_all_pred))
 print('Root Mean Squared Error:', np.sqrt( mean_squared_error(validation_gspc_px, val_all_pred)))
@@ -342,7 +345,7 @@ print("##########################################################")
 print("##########################################################")
 df_val_all_compare = pd.DataFrame({"DATE":val_date,'ACTUAL_PRICE': validation_gspc_px,'PREDICTED_PRICE': val_all_pred.flatten()})
 
-print("# -- Comprare Validation Results: All Variables -- #")
+print("# -- Validation Results - Comprare: All Variables -- #")
 print(df_val_all_compare.tail(10))
 print("##########################################################")
 print("##########################################################")
@@ -350,7 +353,7 @@ print("##########################################################")
 plt.figure()
 plot1, = plt.plot([i for i in range(0,len(df_val_all_compare.index))], df_val_all_compare['ACTUAL_PRICE'])
 plot2, = plt.plot([i for i in range(0,len(df_val_all_compare.index))], df_val_all_compare['PREDICTED_PRICE'])
-plt.xlabel('Prediction - Number of days')
+plt.xlabel('Number of days before April 16th 2020')
 plt.ylabel('Price of S&P500')
 plt.title('Time Series - Compairson of Actual vs Predicted Prices')
 plt.legend((plot1, plot2), ('S&P500 - Actual', 'S&P500 - Predicted'))
@@ -364,7 +367,7 @@ data_reduced_val = pca3.fit_transform(scale(validation_data))
 val_pcr_pred = lr_model_pca.predict(data_reduced_val[:,:10])
 
 # -- Find Metrics and Visualise:
-print("# -- PCR Validation Results: 10 PCA Variables -- #")
+print("# -- Validation Results - PCR: 10 PCA Variables -- #")
 print('Mean Squared Error:', mean_squared_error(validation_gspc_px, val_pcr_pred))
 print('Mean Absolute Error:',  mean_absolute_error(validation_gspc_px, val_pcr_pred))
 print('Root Mean Squared Error:', np.sqrt(mean_squared_error(validation_gspc_px, val_pcr_pred)))
@@ -373,7 +376,7 @@ print('Median Absolute Error:', median_absolute_error(validation_gspc_px, val_pc
 print("##########################################################")
 print("##########################################################")
 df_val_pcr_compare = pd.DataFrame({"DATE":val_date, 'ACTUAL_PRICE': validation_gspc_px, 'PREDICTED_PRICE': val_pcr_pred.flatten()})
-print("# -- Comprare Validation Results: PCR Variables -- #")
+print("# -- Validation Results - Comprare: PCR Variables -- #")
 print(df_val_pcr_compare.tail(10))
 print("##########################################################")
 print("##########################################################")
@@ -381,7 +384,7 @@ print("##########################################################")
 plt.figure()
 plot1, = plt.plot([i for i in range(0,len(df_val_pcr_compare.index))], df_val_pcr_compare['ACTUAL_PRICE'])
 plot2, = plt.plot([i for i in range(0,len(df_val_pcr_compare.index))], df_val_pcr_compare['PREDICTED_PRICE'])
-plt.xlabel('Prediction - Number of days')
+plt.xlabel('Number of days before April 16th 2020')
 plt.ylabel('Price of S&P500')
 plt.title('Time Series - Compairson of Actual vs Predicted Prices')
 plt.legend((plot1, plot2), ('S&P500 - Actual', 'S&P500 - Predicted'))
@@ -392,11 +395,11 @@ plt.show()
 ###############################################
 
 pd = lr_model_pca_all.predict(val_data[:,:10])
-print("# -- Comprare Validation Results: PCR Variables (PCA once / al data) -- #")
+print("# -- Validation Results - Comprare: PCR Variables (PCA once / al data) -- #")
 print('Mean Squared Error:', mean_squared_error(val_gspc_px, pd))
 print('Mean Absolute Error:', mean_absolute_error(val_gspc_px, pd))
 print('Root Mean Squared Error:', np.sqrt(mean_squared_error(val_gspc_px, pd)))
 print('R-Squared:', r2_score(val_gspc_px, pd))
 print('Median Absolute Error:', median_absolute_error(val_gspc_px, pd))
 print("##########################################################")
-print("##########################################################")'''
+print("##########################################################")

@@ -25,12 +25,12 @@ twitter_pgs = ["CNN", "BBCWorld", "BBCBreaking", "BBCNews", "ABC", "Independent"
                "CBSNews", "MSNBC", "nytimes", "FT", "business", "cnni", "RT_com", "AJEnglish", "CBS", "NewsHour",
                "BreakingNews", "cnnbrk", "WSJ", "Reuters", "SkyNews", "CBCAlerts"]
 
-# tweets_list = fns.get_tweets_list(twitter_pgs, 120)
-# df_all_tweets = fns.tweets_to_df(tweets_list)
-# df_all_tweets = df_all_tweets.sort_values(by='DATE_TIME', ascending=0)
-# df_all_tweets = df_all_tweets.drop_duplicates()
-# df_all_tweets.to_csv(r"C:\Users\btier\Documents\twitter_mass_media_data_2.csv", index= False)
-# df_all_tweets = pd.read_csv()
+#tweets_list = fns.get_tweets_list(twitter_pgs, 120) #
+tweets_list = fns.get_tweets_list(twitter_pgs, 1) # in reality, 120 pages per account are extracted. for demonstrating, takes 1 pages and ignores.
+df_all_tweets = fns.tweets_to_df(tweets_list)
+df_all_tweets = df_all_tweets.sort_values(by='DATE_TIME', ascending=0)
+df_all_tweets = df_all_tweets.drop_duplicates()
+# df_all_tweets.to_csv(r".\twitter_mass_media_data_2.csv", index= False)
 
 ######################################################################################
 # Extract: 2. Macroeconomic data from Quandl.
@@ -38,55 +38,55 @@ twitter_pgs = ["CNN", "BBCWorld", "BBCBreaking", "BBCNews", "ABC", "Independent"
 
 # 1. Get stock prices: SPX / GSPC
 # -- manually downloaded from: https://finance.yahoo.com/quote/%5EGSPC/history?period1=-1325635200&period2=1586736000&interval=1d&filter=history&frequency=1d
-gspc_df = pd.read_csv(r"C:\Users\btier\Downloads\^GSPC.csv")
+gspc_df = pd.read_csv(r".\raw_datasets\^GSPC.csv")
 gspc_df.columns = ['DATE', 'GSPC_OPEN', 'GSPC_HIGH', 'GSPC_LOW', 'GSPC_CLOSE', 'GSPC_ADJ_CLOSE', 'GSPC_VOL']
 
 # 2. Get predictors:
-PCAR = pd.read_csv(r"C:\Users\btier\Downloads\PCAR.csv")[['Date', 'Close', 'Volume']]
+PCAR = pd.read_csv(r".\raw_datasets\PCAR.csv")[['Date', 'Close', 'Volume']]
 PCAR.columns = ['DATE', 'PCAR_CLOSE', 'PCAR_VOL']
-WMT = pd.read_csv(r"C:\Users\btier\Downloads\WMT.csv")[['Date', 'Close', 'Volume']]
+WMT = pd.read_csv(r".\raw_datasets\WMT.csv")[['Date', 'Close', 'Volume']]
 WMT.columns = ['DATE', 'WMT_CLOSE', 'WMT_VOL']
-SWK = pd.read_csv(r"C:\Users\btier\Downloads\SWK.csv")[['Date', 'Close', 'Volume']]
+SWK = pd.read_csv(r".\raw_datasets\SWK.csv")[['Date', 'Close', 'Volume']]
 SWK.columns = ['DATE', 'SWK_CLOSE', 'SWK_VOL']
-BSX = pd.read_csv(r"C:\Users\btier\Downloads\BSX.csv")[['Date', 'Close', 'Volume']]
+BSX = pd.read_csv(r".\raw_datasets\BSX.csv")[['Date', 'Close', 'Volume']]
 BSX.columns = ['DATE', 'BSX_CLOSE', 'BSX_VOL']
-NI = pd.read_csv(r"C:\Users\btier\Downloads\NI.csv")[['Date', 'Close', 'Volume']]
+NI = pd.read_csv(r".\raw_datasets\NI.csv")[['Date', 'Close', 'Volume']]
 NI.columns = ['DATE', 'NI_CLOSE', 'NI_VOL']
-FNMA = pd.read_csv(r"C:\Users\btier\Downloads\FNMA.csv")[['Date', 'Close', 'Volume']]
+FNMA = pd.read_csv(r".\raw_datasets\FNMA.csv")[['Date', 'Close', 'Volume']]
 FNMA.columns = ['DATE', 'FNMA_CLOSE', 'FNMA_VOL']
-VFC = pd.read_csv(r"C:\Users\btier\Downloads\VFC.csv")[['Date', 'Close', 'Volume']]
+VFC = pd.read_csv(r".\raw_datasets\VFC.csv")[['Date', 'Close', 'Volume']]
 VFC.columns = ['DATE', 'VFC_CLOSE', 'VFC_VOL']
-TXT = pd.read_csv(r"C:\Users\btier\Downloads\TXT.csv")[['Date', 'Close', 'Volume']]
+TXT = pd.read_csv(r".\raw_datasets\TXT.csv")[['Date', 'Close', 'Volume']]
 TXT.columns = ['DATE', 'TXT_CLOSE', 'TXT_VOL']
-TGT = pd.read_csv(r"C:\Users\btier\Downloads\TGT.csv")[['Date', 'Close', 'Volume']]
+TGT = pd.read_csv(r".\raw_datasets\TGT.csv")[['Date', 'Close', 'Volume']]
 TGT.columns = ['DATE', 'TGT_CLOSE', 'TGT_VOL']
-INTC = pd.read_csv(r"C:\Users\btier\Downloads\INTC.csv")[['Date', 'Close', 'Volume']]
+INTC = pd.read_csv(r".\raw_datasets\INTC.csv")[['Date', 'Close', 'Volume']]
 INTC.columns = ['DATE', 'INTC_CLOSE', 'INTC_VOL']
-WFC = pd.read_csv(r"C:\Users\btier\Downloads\WFC.csv")[['Date', 'Close', 'Volume']]
+WFC = pd.read_csv(r".\raw_datasets\WFC.csv")[['Date', 'Close', 'Volume']]
 WFC.columns = ['DATE', 'WFC_CLOSE', 'WFC_VOL']
-DIS = pd.read_csv(r"C:\Users\btier\Downloads\DIS.csv")[['Date', 'Close', 'Volume']]
+DIS = pd.read_csv(r".\raw_datasets\DIS.csv")[['Date', 'Close', 'Volume']]
 DIS.columns = ['DATE', 'DIS_CLOSE', 'DIS_VOL']
-NEE = pd.read_csv(r"C:\Users\btier\Downloads\NEE.csv")[['Date', 'Close', 'Volume']]
+NEE = pd.read_csv(r".\raw_datasets\NEE.csv")[['Date', 'Close', 'Volume']]
 NEE.columns = ['DATE', 'NEE_CLOSE', 'NEE_VOL']
-TAP = pd.read_csv(r"C:\Users\btier\Downloads\TAP.csv")[['Date', 'Close', 'Volume']]
+TAP = pd.read_csv(r".\raw_datasets\TAP.csv")[['Date', 'Close', 'Volume']]
 TAP.columns = ['DATE', 'TAP_CLOSE', 'TAP_VOL']
-LNC = pd.read_csv(r"C:\Users\btier\Downloads\LNC.csv")[['Date', 'Close', 'Volume']]
+LNC = pd.read_csv(r".\raw_datasets\LNC.csv")[['Date', 'Close', 'Volume']]
 LNC.columns = ['DATE', 'LNC_CLOSE', 'LNC_VOL']
-DUK = pd.read_csv(r"C:\Users\btier\Downloads\DUK.csv")[['Date', 'Close', 'Volume']]
+DUK = pd.read_csv(r".\raw_datasets\DUK.csv")[['Date', 'Close', 'Volume']]
 DUK.columns = ['DATE', 'DUK_CLOSE', 'DUK_VOL']
-CI = pd.read_csv(r"C:\Users\btier\Downloads\CI.csv")[['Date', 'Close', 'Volume']]
+CI = pd.read_csv(r".\raw_datasets\CI.csv")[['Date', 'Close', 'Volume']]
 CI.columns = ['DATE', 'CI_CLOSE', 'CI_VOL']
-BAC = pd.read_csv(r"C:\Users\btier\Downloads\BAC.csv")[['Date', 'Close', 'Volume']]
+BAC = pd.read_csv(r".\raw_datasets\BAC.csv")[['Date', 'Close', 'Volume']]
 BAC.columns = ['DATE', 'BAC_CLOSE', 'BAC_VOL']
-IFF = pd.read_csv(r"C:\Users\btier\Downloads\IFF.csv")[['Date', 'Close', 'Volume']]
+IFF = pd.read_csv(r".\raw_datasets\IFF.csv")[['Date', 'Close', 'Volume']]
 IFF.columns = ['DATE', 'IFF_CLOSE', 'IFF_VOL']
-JPM = pd.read_csv(r"C:\Users\btier\Downloads\JPM.csv")[['Date', 'Close', 'Volume']]
+JPM = pd.read_csv(r".\raw_datasets\JPM.csv")[['Date', 'Close', 'Volume']]
 JPM.columns = ['DATE', 'JPM_CLOSE', 'JPM_VOL']
-WMB = pd.read_csv(r"C:\Users\btier\Downloads\WMB.csv")[['Date', 'Close', 'Volume']]
+WMB = pd.read_csv(r".\raw_datasets\WMB.csv")[['Date', 'Close', 'Volume']]
 WMB.columns = ['DATE', 'WMB_CLOSE', 'WMB_VOL']
 
 # -- BRENT: https://datahub.io/core/oil-prices#resource-brent-daily
-brent_df = pd.read_csv(r"C:\Users\btier\Downloads\brent-daily_csv.csv")
+brent_df = pd.read_csv(r".\raw_datasets\brent-daily_csv.csv")
 brent_df.columns = ['DATE', 'BRENT_PRICE']
 
 # -- GOLD:
@@ -154,7 +154,6 @@ house_price = fns.get_quandl("YALE/RHPI")
 house_price = house_price.reset_index()
 house_price.columns = ['DATE', 'HOUSE_PX_INX_REAL']
 
-
 # -- MERGE DATASETS:
 all_data = pd.merge(gold_df, silver_df, how='left', left_on='DATE', right_on='DATE')
 all_data = pd.merge(all_data, platinum_future_df, how='left', left_on='DATE', right_on='DATE')
@@ -193,37 +192,7 @@ all_data = pd.merge(all_data, BAC, how='left', left_on='DATE', right_on='DATE')
 all_data = pd.merge(all_data, IFF, how='left', left_on='DATE', right_on='DATE')
 all_data = pd.merge(all_data, JPM, how='left', left_on='DATE', right_on='DATE')
 all_data = pd.merge(all_data, WMB, how='left', left_on='DATE', right_on='DATE')
-all_data.to_csv(r"C:\Users\btier\Documents\economic_data.csv", index=False)
 
-'''
-pip install datapackage
-from datapackage import Package
+print("Raw dataset collected and exported to working directory")
+all_data.to_csv(r".\economic_data.csv", index=False)
 
-package = Package('https://datahub.io/core/s-and-p-500/datapackage.json')
-
-# print list of all resources:
-print(package.resource_names)
-
-# print processed tabular data (if exists any)
-for resource in package.resources:
-    if resource.descriptor['datahub']['type'] == 'derived/csv':
-        print(resource.read())
-
-import datapackage
-import pandas as pd
-
-data_url = 'https://datahub.io/core/s-and-p-500/datapackage.json'
-
-# to load Data Package into storage
-package = datapackage.Package(data_url)
-
-# to load only tabular data
-resources = package.resources
-for resource in resources:
-    if resource.tabular:
-        data = pd.read_csv(resource.descriptor['path'])
-        print (data)
-
-
-
-'''
