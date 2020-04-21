@@ -90,13 +90,13 @@ print("##########################################################")
 #########################################################
 
 # -- Extract validation subset: Keeping for last - never tested on
-validation_data = new_data_reduce3[int(len(new_data_reduce3)*0.99):]
-validation_gspc_px = gspc_px[int(len(gspc_px)*0.99):]
+validation_data = new_data_reduce3[int(len(new_data_reduce3)*0.85):]
+validation_gspc_px = gspc_px[int(len(gspc_px)*0.85):]
 # -- Test / Train split:
-non_validation_data = new_data_reduce3[:int(len(new_data_reduce3)*0.99)]
-non_validation_gspc = gspc_px[:int(len(gspc_px)*0.99)]
+non_validation_data = new_data_reduce3[:int(len(new_data_reduce3)*0.85)]
+non_validation_gspc = gspc_px[:int(len(gspc_px)*0.85)]
 
-data_train, data_test, gspc_px_train, gspc_px_test = train_test_split(non_validation_data, non_validation_gspc, test_size=0.2, random_state=0, shuffle=True)
+data_train, data_test, gspc_px_train, gspc_px_test = train_test_split(non_validation_data, non_validation_gspc, test_size=0.3, random_state=0, shuffle=True)
 val_date = validation_data['DATE']
 del validation_data['DATE']
 '''data_train, data_test, gspc_px_train, gspc_px_test = train_test_split(new_data_reduce3, gspc_px, test_size=0.2, random_state=0, shuffle=True)
@@ -238,6 +238,7 @@ plt.show()
 pca3 = PCA()
 data_reduced_train = pca3.fit_transform(scale(data_train))
 data_reduced_test = pca3.fit_transform(scale(data_test))
+v = pca3.fit_transform(scale(validation_data))
 # -- Initialise LR model
 lr_model_pca = LinearRegression()
 # -- Fit LR model: 6 PC's based on Elbow graph
@@ -269,7 +270,6 @@ print("##########################################################")
 df_compare = pd.DataFrame({'ACTUAL_PRICE': gspc_px_test, 'PREDICTED_PRICE': predictions_2.flatten()})
 # print(df_compare.head(30))
 
-
 # -- Initialise PCA class
 pca_1pc = PCA()
 data_reduced_train_1pc = pca_1pc.fit_transform(scale(data_train))
@@ -290,15 +290,7 @@ print('R-Squared:', r2_score(gspc_px_test, predictions_2_1pc))
 print('Median Absolute Error:', median_absolute_error(gspc_px_test, predictions_2_1pc))
 print("##########################################################")
 print("##########################################################")
-'''
-sns.residplot(data_reduced_test[:,:1], gspc_px_test)
 
-plt.figure()
-# Plot outputs
-plt.scatter(data_reduced_test[:,:1], gspc_px_test,  color='black')
-plt.plot(predictions_2_1pc, gspc_px_test, color='blue', linewidth=3)
-plt.show()
-'''
 #########################################################
 # PCR: Principal Component Regression: All data (do not apply pca - already done to all data)
 #########################################################
@@ -363,7 +355,9 @@ plt.show()
 # 2. Validate OLS regression using PCR predictors: When PCA is done at each stage
 ###############################################
 
-data_reduced_val = pca3.fit_transform(scale(validation_data))
+pca_pcr = PCA()
+
+data_reduced_val = pca_pcr.fit_transform(scale(validation_data))
 val_pcr_pred = lr_model_pca.predict(data_reduced_val[:,:10])
 
 # -- Find Metrics and Visualise:

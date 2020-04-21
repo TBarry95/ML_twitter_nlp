@@ -77,7 +77,7 @@ trump_tweets = trump_tweets.fillna(method='bfill')
 trump_tweets = trump_tweets.fillna(method='ffill')
 msno.matrix(trump_tweets, figsize= (50,30))
 print("# -- Identify Missing Values: -- # ")
-print("By joining 44k with 23k dataset, need to apply backward fill")
+print("By joining 44k with 23k dataset, this results in missing values. Apply backward fill")
 print("##########################################################")
 print("##########################################################")
 

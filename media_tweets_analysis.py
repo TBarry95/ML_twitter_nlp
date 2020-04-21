@@ -41,7 +41,7 @@ import functions_nlp as fns
 ##########################################################################
 # A. EXTRACT: Read in cleaned dataset
 ##########################################################################
-
+df_features = pd.read_csv(r".\media_data_cleaned.csv",)
 
 ##########################################################################
 # C. ANALYSIS:
@@ -247,6 +247,7 @@ all_acc1 = [i[0] for i in acc1]
 all_fts1 = [i[1] for i in acc1]
 all_acc1 = sorted(all_acc1)
 highest_acc1 = all_acc1[-1]
+lowest_acc1 = all_acc1[0]
 
 plt.figure()
 plt.plot(all_acc1)
@@ -267,11 +268,9 @@ df_best3 = df1_best[df1_best['len']==lowest]
 
 print("# -- Test Results - Logistic Regression: Best Models -- #")
 print("Highest Mean Accuracy: ", highest_acc1)
-print("512 models have this score, but this analysis will take the models with lowest features as best")
 print("Number of Best Models", len(df_best3['all_mean'][df_best3['all_mean']==highest_acc1]))
 print("##########################################################")
 print("##########################################################")
-
 print("# -- Best Logistic Regression Models across all variables: -- #")
 print("     MEAN ACCURACY           COMBINATION OF PREDICTORS")
 print(tabulate(df_best3))
@@ -430,10 +429,3 @@ print("##########################################################")
 ##########################################################################
 # C. RESULTS:
 ##########################################################################
-
-
-
-
-
-
-
