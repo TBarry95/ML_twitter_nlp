@@ -26,6 +26,7 @@ print("##########################################################")
 print("# -- Data overview report: -- #")
 print("Number of columns in raw dataset: ", len(all_data.columns))
 print("Number of rows in raw dataset: ", len(all_data))
+print("Date range of raw dataset: ", all_data['DATE'][-1:].values, "to ", all_data['DATE'][:1].values)
 print("##########################################################")
 print("##########################################################")
 
@@ -34,31 +35,35 @@ print("Column names: ", all_data.columns)
 print("##########################################################")
 print("##########################################################")
 
-
 ###############################################
 # 1. Check data: null values
 ###############################################
 print("# -- Checking Null Values: -- #")
 msno.matrix(all_data, figsize= (50,30))
+# -- get % of missing values for each column:
+missing_val_summary = all_data.isna().mean()
+missing_val_summary = pd.DataFrame(missing_val_summary)
+missing_val_summary = missing_val_summary.reset_index()
+missing_val_summary.columns = ['FIELD', 'MEAN']
+missing_val_summary.plot(kind='bar')
+missing_val_param = 0.2
+
+new_data_cols = missing_val_summary['FIELD'][missing_val_summary['MEAN'] <= missing_val_param]
+missing_data = missing_val_summary['FIELD'][missing_val_summary['MEAN'] > missing_val_param].values
 
 # -- Reduce columns:
-new_data = all_data.iloc[:, [0,1,2,3,4,7,8,10,11,12,13,15,16,17,27,28,30,40,42,43,44,45,46,47,48,49,50,51,54,55,56,57,
-                             58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87]]
-print("Reducing dataset from", len(all_data.columns), "columns to", len(new_data.columns), "due to lightly populated fields")
-print("##########################################################")
-print("##########################################################")
-
-print("# -- Filtered column names: : -- #")
-print("Column names: ", new_data.columns)
+new_data = all_data[new_data_cols.values]
+print("Dropped all columns which have more than", missing_val_param*100, "% missing values")
+print("Columns dropped: ")
+print(missing_data)
+print("Reducing dataset from", len(all_data.columns), "columns to", len(new_data.columns))
 print("##########################################################")
 print("##########################################################")
 
 msno.matrix(new_data)
-new_data_reduce1 = new_data[len(new_data['WMB_VOL'])-len(new_data['WMB_VOL'][new_data['WMB_VOL'].notna()]):len(new_data['WMB_VOL'])]
-
+new_data_reduce1 = new_data[len(new_data['FNMA_CLOSE'])-len(new_data['FNMA_CLOSE'][new_data['FNMA_CLOSE'].notna()]):len(new_data['FNMA_CLOSE'])]
 msno.matrix(new_data_reduce1)
 new_data_reduce2 = new_data_reduce1.fillna(method='ffill')
-
 msno.matrix(new_data_reduce2)
 
 #####################################
@@ -75,16 +80,18 @@ print("##########################################################")
 msno.matrix(new_data_reduce3)
 sns.heatmap(new_data_reduce3.isnull(), cbar=False)
 
-df_summary = new_data_reduce3[['GOLD_GBP_PM', 'SILVER_PRICE_USD',  'GSPC_CLOSE', 'LNC_CLOSE','JPM_CLOSE', 'JPM_VOL']].describe()
+df_summary = new_data_reduce3.describe()
 
 print("# -- Cleaned Data Set summary: Random Sample out of entire dataset (too big to print) -- #")
-print(tabulate(df_summary, headers=df_summary.columns))
+print(df_summary)
 print("##########################################################")
 print("##########################################################")
 
 ###############################################
 # Export data
 ###############################################
+
+
 
 new_data_reduce3.to_csv(r".\quant_data_cleaned.csv", index=False)
 

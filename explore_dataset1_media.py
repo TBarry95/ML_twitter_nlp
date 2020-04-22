@@ -27,6 +27,10 @@ from matplotlib.pyplot import ion
 ion() # enables interactive mode
 from sklearn.metrics import *
 from tabulate import tabulate
+from matplotlib.pyplot import ion
+from matplotlib.pyplot import plot
+ion() # enables interactive mode
+from wordcloud import WordCloud
 
 # Source files (functions):
 import functions_nlp as fns
@@ -51,12 +55,34 @@ print("# -- Data overview report: -- #")
 print("1. Media tweets: ")
 print("Number of columns in raw dataset: ", len(df_all_tweets.columns))
 print("Number of rows in raw dataset: ", len(df_all_tweets))
+print("Date range of raw dataset: ", df_all_tweets['DATE_TIME'][-1:].values, "to ", df_all_tweets['DATE_TIME'][:1].values)
 print("2. Labelled Tweets from Kaggle: ")
 print("Number of columns in raw dataset: ", len(labelled_tweets.columns))
 print("Number of rows in raw dataset: ", len(labelled_tweets))
 print("3. S&P500 data")
 print("Number of columns in raw dataset: ", len(gspc_df.columns))
 print("Number of rows in raw dataset: ", len(gspc_df))
+print("Date range of raw dataset: ", gspc_df['Date'][-1:].values, "to ", gspc_df['Date'][:1].values)
+print("##########################################################")
+print("##########################################################")
+
+# -- get % of missing values for each column:
+missing_val_summary = df_all_tweets.isna().mean()
+missing_val_summary = pd.DataFrame(missing_val_summary)
+missing_val_summary = missing_val_summary.reset_index()
+missing_val_summary.columns = ['FIELD', 'MEAN']
+missing_val_summary.plot(kind='bar')
+missing_val_param = 0.2
+
+new_data_cols = missing_val_summary['FIELD'][missing_val_summary['MEAN'] <= missing_val_param]
+missing_data = missing_val_summary['FIELD'][missing_val_summary['MEAN'] > missing_val_param].values
+
+# -- Reduce columns:
+print("# -- Checking Null Values: -- #")
+new_data = df_all_tweets[new_data_cols.values]
+print("Dropped all columns which have more than", missing_val_param*100, "% missing values")
+print("Columns dropped from tweet dataset: ")
+print(missing_data)
 ##########################################################################
 # B. TRANSFORM:
 ##########################################################################
@@ -64,30 +90,45 @@ print("Number of rows in raw dataset: ", len(gspc_df))
 ##########################################
 # 1. Clean Tweets from tweepy
 ##########################################
-
-print("# -- Checking Null Values: -- #")
-msno.matrix(df_all_tweets, figsize= (50,30))
-print("Dropping 2 sparsely populated columns ")
-print("1. Reply to User ID ")
-print("2. Reply to User ")
-print("No important features are lost or affected for this analysis by dropping")
+msno.matrix(new_data, figsize= (50,30))
+print("##########################################################")
+print("##########################################################")
+print("# -- Get word cloud before text processing -- #")
+# -- word cloud before processing:
+make_string = ','.join(list(new_data['FULL_TEXT'].values))
+wc = WordCloud(background_color="white", width=550, height=550, max_words=100, contour_width=2,
+                           contour_color='steelblue')
+wc.generate(make_string)
+wc.to_file(r".\media_wordcloud_before.png")
 print("##########################################################")
 print("##########################################################")
 
 # -- Format date:
-df_all_tweets['DATE_TIME'] = [str(i)[0:10] for i in df_all_tweets['DATE_TIME']]
+new_data['DATE_TIME'] = [str(i)[0:10] for i in new_data['DATE_TIME']]
 
+print("# -- Print head of tweets: Check punctuation, Special characters -- #")
 # -- Make new column for processed name:
-df_all_tweets['PROCESSED_TEXT'] = df_all_tweets['FULL_TEXT'].map(lambda i: re.sub(r"(@[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+:\/\/\S+)|(RT)", '', i))
+print(new_data['FULL_TEXT'].head(10))
 
+print("##########################################################")
+print("##########################################################")
+
+print("# -- Remove punctuation, numbers, and special characters using Regular Expressions -- #")
+new_data['PROCESSED_TEXT'] = new_data['FULL_TEXT'].map(lambda i: re.sub(r"(@[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+:\/\/\S+)|( RT )|(^RT )|(\d+)", '', i))
+print(new_data['PROCESSED_TEXT'].head(10))
+print("##########################################################")
+print("##########################################################")
+print("# -- Remove stop words, apply lowercase, and export new word cloud after cleaning -- #")
 # -- Remove stop words:
-df_all_tweets['PROCESSED_TEXT'] = [i for i in df_all_tweets['PROCESSED_TEXT'] if i not in stopwords.words('english')]
-
+new_data['PROCESSED_TEXT'] = [i.lower() for i in new_data['PROCESSED_TEXT'] if i not in stopwords.words('english')]
+print(new_data['PROCESSED_TEXT'].head(10))
+print("##########################################################")
+print("##########################################################")
 # -- Check for formatting:
-word_cloud = fns.get_wordcloud(df_all_tweets, r"C:\Users\btier\Documents\news_word_cloud.png")
+word_cloud = fns.get_wordcloud(new_data,r".\media_wordcloud_after.png")
 
 # -- bag of words - stop words already removed:
-top_words = fns.get_top_words(df_all_tweets)
+top_words = fns.get_top_words(new_data)
 
 ##########################################
 # 2. Clean Tweets from Kaggle (only for training!)
@@ -106,111 +147,22 @@ label_tweet_smaller = df.append(label_0[0:int(len(label_0)/5)])
 label_tweet_smaller = label_tweet_smaller.append(label_4[0:int(len(label_4)/5)])
 
 # -- Remove stop words:
-label_tweet_smaller['PROCESSED_TEXT'] = label_tweet_smaller['text'].map(lambda i: re.sub(r"(@[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+:\/\/\S+)|(RT)", '', i))
+label_tweet_smaller['PROCESSED_TEXT'] = label_tweet_smaller['text'].map(lambda i: re.sub(r"(@[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+:\/\/\S+)|(RT)|(^RT )|(\d+)", '', i))
 label_tweet_smaller['PROCESSED_TEXT'] = [i for i in label_tweet_smaller['PROCESSED_TEXT'] if i not in stopwords.words('english')]
 
 print("# -- Tweet cleaning for NLP: Both Media Tweets and Training dataset from Kaggle -- # ")
-print("1. Removed all punctuation and special characters")
+print("1. Removed all punctuation, numbers and special characters")
 print("2. Removed all domain specific jargon such as RT (retweet)")
 print("3. Removed all Stop Words")
 print("##########################################################")
 print("##########################################################")
-##########################################
-# 3. Get Sentiment: Lexicon-based polarity
-##########################################
 
-# -- Lexicon-based sentiment (-1,0,1):
-df_all_tweets["SENTIMENT_1"] = np.array([twt.AnalyseTweetsClass().sentiment_analyser(i) for i in df_all_tweets["PROCESSED_TEXT"]])
-df_all_tweets = fns.get_sentiment_pa(df_all_tweets)
+print("# -- Export cleaned datasets to working directory -- #")
+new_data.dropna()
+label_tweet_smaller.dropna()
 
-##########################################
-# 4. Get Sentiment: NB Classifier over tweets
-##########################################
+new_data.isna().mean()
 
-# -- Train Multinomial NB on Twitter dataset from Kaggle:
-nb_train, nb_test, nb_train_sent, nb_test_sent = train_test_split(label_tweet_smaller['PROCESSED_TEXT'], label_tweet_smaller['sentiment'], test_size=0.3, random_state=0)
-
-from sklearn.feature_extraction.text import CountVectorizer
-count_vect = CountVectorizer()
-X_train_counts = count_vect.fit_transform(nb_train)
-X_test_counts = count_vect.transform(nb_test)
-tweets_counts = count_vect.transform(df_all_tweets["PROCESSED_TEXT"])
-
-from sklearn.feature_extraction.text import TfidfTransformer
-tfidf_transformer = TfidfTransformer()
-X_train_tfidf = tfidf_transformer.fit_transform(X_train_counts)
-X_test_tfidf = tfidf_transformer.transform(X_test_counts)
-tweets_counts_tfidf = tfidf_transformer.transform(tweets_counts)
-
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.naive_bayes import BernoulliNB
-nb = MultinomialNB()
-nb.fit(X_train_tfidf, nb_train_sent)
-pred_nb = nb.predict(X_test_tfidf)
-
-bn = BernoulliNB()
-bn.fit(X_train_tfidf, nb_train_sent)
-pred_bn = bn.predict(X_test_tfidf)
-from sklearn import metrics
-
-print("Accuracy of Multinomial Naive Bayes Classifier:", nb.score(X_test_tfidf, nb_test_sent))
-print("Accuracy of Bernoulli Naive Bayes Classifier:", bn.score(X_test_tfidf, nb_test_sent))
-print("Applying Bernoulli NB as a predictor variable for stock prices")
-print("Bernoulli NB Report:")
-print(metrics.classification_report(pred_bn, nb_test_sent))
-print("Bernoulli NB Confusion Matrix:")
-print(metrics.confusion_matrix(pred_bn, nb_test_sent))
-print("##########################################################")
-print("##########################################################")
-
-# -- Get sentiment score for tweets from media companies:
-df_all_tweets["NB_SENTIMENT"] = nb.predict(tweets_counts_tfidf)
-
-# Cant verify if right or wrong, but assuming 77% right
-
-##########################################
-# 5. Get feature set: Aggregate tweets by date:
-##########################################
-
-df_features = pd.DataFrame()
-df_features['MEAN_SENT1'] = df_all_tweets.groupby('DATE_TIME')['SENTIMENT_1'].mean()
-df_features['MEAN_SENT2'] = df_all_tweets.groupby('DATE_TIME')['SENTIMENT_PA'].mean()
-df_features['MEAN_SENT3_NB'] = df_all_tweets.groupby('DATE_TIME')['NB_SENTIMENT'].mean()
-df_features['MEAN_SENT1_PCT'] = df_features['MEAN_SENT1'].pct_change()
-df_features['MEAN_SENT2_PCT'] = df_features['MEAN_SENT2'].pct_change()
-df_features['MEAN_SENT3_NB_PCT'] = df_features['MEAN_SENT3_NB'].pct_change()
-df_features['FAV_COUNT_DAY'] = df_all_tweets.groupby('DATE_TIME')['FAV_COUNT'].sum()
-df_features['RT_COUNT_DAY'] = df_all_tweets.groupby('DATE_TIME')['RT_COUNT'].sum()
-df_features['TWEET_COUNT_DAY'] = df_all_tweets.groupby('DATE_TIME')['SENTIMENT_1'].count()
-df_features['LEN_TWEET_SUM'] = df_all_tweets.groupby('DATE_TIME')['LEN_TWEET'].sum()
-df_features['FOLLOWERS'] = df_all_tweets.groupby('DATE_TIME')['FOLLOWERS'].sum()
-
-# -- Handle infs:
-df_features['MEAN_SENT1_PCT'][df_features['MEAN_SENT1_PCT'].values == -np.inf] = -0.99 # replace + and - infinity
-df_features['MEAN_SENT1_PCT'][df_features['MEAN_SENT1_PCT'].values == np.inf] = 0.99
-df_features['MEAN_SENT2_PCT'][df_features['MEAN_SENT2_PCT'].values == np.inf] = 0.99
-df_features['MEAN_SENT2_PCT'][df_features['MEAN_SENT2_PCT'].values == -np.inf] = -0.99
-df_features['MEAN_SENT3_NB_PCT'][df_features['MEAN_SENT3_NB_PCT'].values == -np.inf] = -0.99
-df_features['MEAN_SENT3_NB_PCT'][df_features['MEAN_SENT3_NB_PCT'].values == np.inf] = 0.99
-
-# -- Join tweets to stock prices:
-gspc_df_features = gspc_df[['Date', 'Close', 'pct_change', 'direction']]
-df_features = pd.merge(df_features, gspc_df_features, how='left', left_on='DATE_TIME', right_on='Date')
-msno.matrix(df_features, figsize= (50,30))
-df_features = df_features.dropna()
-
-df_features.to_csv(r".\media_data_cleaned.csv", index=False)
-
-from tabulate import tabulate
-print("# -- Cleaned Data Set summary: Random Sample out of entire dataset (too big to print) -- #")
-print(tabulate(df_features.describe(), headers=df_features.columns))
-print("##########################################################")
-print("##########################################################")
-np.random.seed(0)
-print("Boxplot between 3 sentiment aggregations")
-print("Outliers are as a result of low day counts for each senntiment")
-boxplot = df_features.boxplot(column=['MEAN_SENT1_PCT',
-                                'MEAN_SENT2_PCT', 'MEAN_SENT3_NB_PCT'])
-boxplot = df_features.boxplot(column=['RT_COUNT_DAY', 'FAV_COUNT_DAY'])
-print("##########################################################")
-print("##########################################################")
+new_data.to_csv("./cleaned_media_tweets.csv", index=False)
+label_tweet_smaller.to_csv("./label_tweet_smaller.csv", index=False)
+gspc_df.to_csv("./gspc_df.csv")

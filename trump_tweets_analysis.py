@@ -297,7 +297,7 @@ rf.fit(X_train2, y_train2)
 
 rf.predict(X_test2)
 rf.score(X_test2, y_test2)
-
+'''
 df = pd.DataFrame()
 df['DATE'] = validation['DATE']
 df['PREDICTED_PX'] = rf.predict(validation[['MEAN_DAILY_SENT1', 'MEAN_DAILY_SENT2', 'PCT_CHG_SENT1', 'PCT_CHG_SENT2', 'TWEET_COUNT', 'RT_COUNT']])
@@ -310,8 +310,7 @@ plt.title("Actual vs Predicted S&P500 Price")
 plt.xlabel("Days up until April 12th")
 plt.ylabel("Prices (USD)")
 plt.legend([plt1, plt2], ["Predicted Price", "Actual Price"])
-
-
+'''
 
 
 

@@ -33,25 +33,26 @@ new_data_reduce3 = all_data
 #    - Also included entire dataset, as PCA will be performed 4 times.
 # 3. Linear Regression: Using All variables vs VIF results
 # 4. PCA: Principal Component Analysis: PCA done on each dataset sepearately
-#    - First regression run does PCA on train, test and validation sperately.
-#    - Second time, PCA done once before splitting dataset (all data).
 # 5. PCR: Principal Component Regression: PCA done on each dataset sepearately
-# 6. PCA and PCR: Done on entire dataset first, then applied
+# 6. PCA and PCR:
+# 7. Cross validation LR models
 ######################################################################################
 
 #########################################################
-# 1. Explore Dataset:
+# 1. Explore Dataset for Regression:
 #########################################################
 
 ###############################################
 # Prepare data: Seperate dependent and independent variables
 ###############################################
+
 gspc_px = new_data_reduce3['GSPC_CLOSE']
 del new_data_reduce3['GSPC_CLOSE']
 del new_data_reduce3['GSPC_OPEN']
 del new_data_reduce3['GSPC_LOW']
 del new_data_reduce3['GSPC_ADJ_CLOSE']
 del new_data_reduce3['GSPC_VOL']
+del new_data_reduce3['GSPC_HIGH']
 
 ###############################################
 # Plot: Correlation Matrix Plot:
@@ -123,7 +124,7 @@ lr_model_all_vars.fit(data_train, gspc_px_train)
 predictions_test = lr_model_all_vars.predict(data_test)
 
 # -- Find Metrics and Visualise:
-print("# -- Test Results - OLS: All 56 Variables  -- #")
+print("# -- Test Results - OLS: All", len(data_train.columns), "Variables  -- #")
 print('Mean Squared Error:', mean_squared_error(gspc_px_test, predictions_test))
 print('Mean Absolute Error:', mean_absolute_error(gspc_px_test, predictions_test))
 print('Root Mean Squared Error:', np.sqrt(mean_squared_error(gspc_px_test, predictions_test)))
@@ -131,6 +132,7 @@ print('R-Squared:', r2_score(gspc_px_test, predictions_test))
 print('Median Absolute Error:', median_absolute_error(gspc_px_test, predictions_test))
 print("##########################################################")
 print("##########################################################")
+
 ###############################################
 # 2. Run OLS regression using VIF predictors:
 ###############################################
@@ -198,37 +200,6 @@ plt.ylabel('% Variance Explained')
 plt.title('Elbow Chart - Variance Explained by Principal Component')
 plt.show()
 
-###############################################
-# 2. On all dataset:
-###############################################
-del all_data_pca['DATE']
-
-pca4 = PCA()
-data_reduced_all = pca4.fit_transform(scale(all_data_pca))
-kfold_cv_10_all = model_selection.KFold(n_splits=10, random_state=0, shuffle=True)
-lr_model_pca_all = LinearRegression()
-mse_pca_all = []
-for i in np.arange(1, 50):
-    # Multiple by -1 to negate the scoring method
-    mse_result = -1 * model_selection.cross_val_score(lr_model_pca_all, data_reduced_all[:, :i], gspc_px.ravel(),
-                                                      cv=kfold_cv_10_all,scoring='neg_mean_squared_error').mean()
-    mse_pca_all.append(mse_result)
-
-# -- Plot elbow graph of MSE
-plt.figure()
-plt.plot(mse_pca_all, '-v')
-plt.xlabel('Principal Components in Linear Regression Model (all)')
-plt.ylabel('MSE - Mean Squared Error')
-plt.title('Elbow Chart - PCA K-Fold Cross Validation (all)')
-plt.show()
-# -- Plot elbow graph of variance
-variance_explained_all = np.cumsum(np.round(pca4.explained_variance_ratio_, decimals=4)*100)
-plt.figure()
-plt.plot(variance_explained_all)
-plt.xlabel('Principal Components in Linear Regression Model (all)')
-plt.ylabel('% Variance Explained')
-plt.title('Elbow Chart - Variance Explained by Principal Component (all)')
-plt.show()
 
 #########################################################
 # PCR: Principal Component Regression: Train and test (apply pca to both train and test)
@@ -242,9 +213,9 @@ v = pca3.fit_transform(scale(validation_data))
 # -- Initialise LR model
 lr_model_pca = LinearRegression()
 # -- Fit LR model: 6 PC's based on Elbow graph
-lr_model_pca.fit(data_reduced_train[:,:10], gspc_px_train)
+lr_model_pca.fit(data_reduced_train[:,:20], gspc_px_train)
 # -- Run model:
-predictions_2 = lr_model_pca.predict(data_reduced_test[:,:10])
+predictions_2 = lr_model_pca.predict(data_reduced_test[:,:20])
 
 # -- Find Metrics and Visualise:
 print("# -- Test Results - PCR: 10 PCA Variables -- #")
@@ -291,32 +262,6 @@ print('Median Absolute Error:', median_absolute_error(gspc_px_test, predictions_
 print("##########################################################")
 print("##########################################################")
 
-#########################################################
-# PCR: Principal Component Regression: All data (do not apply pca - already done to all data)
-#########################################################
-
-# -- Extract validation subset: Keeping for last - never tested on
-val_data = data_reduced_all[int(len(data_reduced_all)*0.96):]
-val_gspc_px = gspc_px[int(len(gspc_px)*0.96):]
-
-# -- Test / Train split:
-non_val_data = data_reduced_all[:int(len(data_reduced_all)*0.96)]
-non_val_gspc = gspc_px[:int(len(gspc_px)*0.96)]
-data_train_all, data_test_all, gspc_px_train_all, gspc_px_test_all = train_test_split(non_val_data, non_val_gspc, test_size=0.2, random_state=0, shuffle=True)
-
-lr_model_pca_all = LinearRegression()
-lr_model_pca_all.fit(data_train_all[:,:10], gspc_px_train_all)
-predall = lr_model_pca_all.predict(data_test_all[:,:10])
-
-# -- Find Metrics and Visualise:
-print("# -- Test Results - PCR 2 (all data): 10 PCA Variables -- #")
-print('Mean Squared Error:', mean_squared_error(gspc_px_test_all, predall))
-print('Mean Absolute Error:', mean_absolute_error(gspc_px_test_all, predall))
-print('Root Mean Squared Error:', np.sqrt(mean_squared_error(gspc_px_test_all, predall)))
-print('R-Squared:', r2_score(gspc_px_test_all, predall))
-print('Median Absolute Error:', median_absolute_error(gspc_px_test_all, predall))
-print("##########################################################")
-print("##########################################################")
 ######################################################################################
 # D. RESULTS: Validation: Compare results of OLS on all variables vs PCR:
 ######################################################################################
@@ -358,7 +303,7 @@ plt.show()
 pca_pcr = PCA()
 
 data_reduced_val = pca_pcr.fit_transform(scale(validation_data))
-val_pcr_pred = lr_model_pca.predict(data_reduced_val[:,:10])
+val_pcr_pred = lr_model_pca.predict(data_reduced_val[:,:20])
 
 # -- Find Metrics and Visualise:
 print("# -- Validation Results - PCR: 10 PCA Variables -- #")
@@ -385,15 +330,25 @@ plt.legend((plot1, plot2), ('S&P500 - Actual', 'S&P500 - Predicted'))
 plt.show()
 
 ###############################################
-# 3. Validate OLS regression using PCR predictors: When PCA is done once
+# Cross validation K-Fold regression:
 ###############################################
+# Necessary imports:
+from sklearn.model_selection import cross_val_score, cross_val_predict
 
-pd = lr_model_pca_all.predict(val_data[:,:10])
-print("# -- Validation Results - Comprare: PCR Variables (PCA once / al data) -- #")
-print('Mean Squared Error:', mean_squared_error(val_gspc_px, pd))
-print('Mean Absolute Error:', mean_absolute_error(val_gspc_px, pd))
-print('Root Mean Squared Error:', np.sqrt(mean_squared_error(val_gspc_px, pd)))
-print('R-Squared:', r2_score(val_gspc_px, pd))
-print('Median Absolute Error:', median_absolute_error(val_gspc_px, pd))
-print("##########################################################")
-print("##########################################################")
+linear_mdl_cv = LinearRegression()
+# Perform 6-fold cross validation
+lr_kf_r2 = []
+for i in range(2,20):
+    pred = cross_val_predict(linear_mdl_cv, new_data_reduce3, gspc_px, cv=i)
+    lr_kf_r2.append(r2_score(gspc_px, pred))
+
+pca_new = PCA()
+reducer_all = pca_new.fit_transform(scale(new_data_reduce3))
+lin_md = LinearRegression()
+
+lr_kf_r2_pca = []
+for i in range(2,20):
+    pred = cross_val_predict(lin_md, reducer_all[:,20], gspc_px, cv=i)
+    lr_kf_r2_pca.append(r2_score(gspc_px, pred))
+
+

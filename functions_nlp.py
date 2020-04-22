@@ -247,13 +247,13 @@ def get_top_words(trump_df_clean):
     counts = [i[1] for i in count_dict]
     return [single_words, counts]
 
-def get_sentiment_pa(trump_df_clean):
+def get_sentiment_lex_cont(trump_df_clean):
     sentiment = []
-    for i in trump_df_clean['PROCESSED_TEXT']:
+    for i in trump_df_clean:
+        i = str(i)
         blob = TextBlob(i)
         sentiment.append(blob.sentiment.polarity)
-    trump_df_clean['SENTIMENT_PA'] = sentiment
-    return trump_df_clean
+    return sentiment
 
 def get_sentiment_nbayes(trump_df_clean):
     sentiment = []
