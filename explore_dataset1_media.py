@@ -68,10 +68,11 @@ print("##########################################################")
 
 # -- get % of missing values for each column:
 missing_val_summary = df_all_tweets.isna().mean()
+pc_missing = (sum(missing_val_summary) / len(missing_val_summary))*100
 missing_val_summary = pd.DataFrame(missing_val_summary)
+missing_val_summary.plot(kind='bar', legend=False, title="Proportion of Missing Values: Media Tweets")
 missing_val_summary = missing_val_summary.reset_index()
 missing_val_summary.columns = ['FIELD', 'MEAN']
-missing_val_summary.plot(kind='bar')
 missing_val_param = 0.2
 
 new_data_cols = missing_val_summary['FIELD'][missing_val_summary['MEAN'] <= missing_val_param]

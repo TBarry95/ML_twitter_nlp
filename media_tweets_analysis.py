@@ -328,7 +328,6 @@ def random_forest_regression(Xtrain, Xtest, ytrain, ytest, list_of_features, num
 all_fts = ['MEAN_SENT1', 'MEAN_SENT2',  'MEAN_SENT1_PCT', 'MEAN_SENT2_PCT', 'MEAN_SENT3_NB', 'MEAN_SENT3_NB_PCT',
                                 'FAV_COUNT_DAY', 'RT_COUNT_DAY', 'TWEET_COUNT_DAY', 'LEN_TWEET_SUM',
                                  'FOLLOWERS']
-
 combosrf = []
 for L in range(0, len(all_fts)+1):
     for subset in itertools.combinations(all_fts, L):

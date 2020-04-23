@@ -39,13 +39,15 @@ print("##########################################################")
 # 1. Check data: null values
 ###############################################
 print("# -- Checking Null Values: -- #")
-msno.matrix(all_data, figsize= (50,30))
 # -- get % of missing values for each column:
+msno.matrix(all_data)
 missing_val_summary = all_data.isna().mean()
+percent_missing = (sum(missing_val_summary) / len(missing_val_summary) )*100
+print("Missing values %: ", percent_missing)
 missing_val_summary = pd.DataFrame(missing_val_summary)
+missing_val_summary.plot(kind='bar', legend=False, title="Proportion of Missing Values: Economic/Financial Data")
 missing_val_summary = missing_val_summary.reset_index()
 missing_val_summary.columns = ['FIELD', 'MEAN']
-missing_val_summary.plot(kind='bar')
 missing_val_param = 0.2
 
 new_data_cols = missing_val_summary['FIELD'][missing_val_summary['MEAN'] <= missing_val_param]
@@ -57,12 +59,24 @@ print("Dropped all columns which have more than", missing_val_param*100, "% miss
 print("Columns dropped: ")
 print(missing_data)
 print("Reducing dataset from", len(all_data.columns), "columns to", len(new_data.columns))
+missing_val_summary_1 = new_data.isna().mean()
+percent_missing_1 = (sum(missing_val_summary_1) / len(missing_val_summary_1) )*100
+print("Missing values %: ", percent_missing_1)
 print("##########################################################")
 print("##########################################################")
 
 msno.matrix(new_data)
 new_data_reduce1 = new_data[len(new_data['FNMA_CLOSE'])-len(new_data['FNMA_CLOSE'][new_data['FNMA_CLOSE'].notna()]):len(new_data['FNMA_CLOSE'])]
+print("Cutting rows from ", len(new_data), " to ", len(new_data_reduce1), " rows")
+print("##########################################################")
+print("##########################################################")
+
+missing_val_summary1 = new_data_reduce1.isna().mean()
+percent_missing1 = (sum(missing_val_summary1) / len(missing_val_summary1) )*100
+print("Missing values %: ", percent_missing1)
+
 msno.matrix(new_data_reduce1)
+
 new_data_reduce2 = new_data_reduce1.fillna(method='ffill')
 msno.matrix(new_data_reduce2)
 

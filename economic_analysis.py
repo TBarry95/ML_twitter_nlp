@@ -30,11 +30,10 @@ new_data_reduce3 = all_data
 # C. ANALYSIS:
 # 1. Explore dataset.
 # 2. Split dataset: Train, test, validation and all.
-#    - Also included entire dataset, as PCA will be performed 4 times.
-# 3. Linear Regression: Using All variables vs VIF results
-# 4. PCA: Principal Component Analysis: PCA done on each dataset sepearately
-# 5. PCR: Principal Component Regression: PCA done on each dataset sepearately
-# 6. PCA and PCR:
+#  -- Linear Regression: Using All variables vs VIF results
+#  -- PCA: Principal Component Analysis: PCA done on each dataset sepearately
+#  -- PCR: Principal Component Regression: PCA done on each dataset sepearately
+#  -- PCA and PCR:
 # 7. Cross validation LR models
 ######################################################################################
 
@@ -351,4 +350,26 @@ for i in range(2,20):
     pred = cross_val_predict(lin_md, reducer_all[:,20], gspc_px, cv=i)
     lr_kf_r2_pca.append(r2_score(gspc_px, pred))
 
+from sklearn.linear_model import Ridge
+data_train11, data_test11, gspc_px_train11, gspc_px_test11 = train_test_split(non_validation_data, non_validation_gspc, test_size=0.3, random_state=0, shuffle=True)
+del data_train11['DATE']
+del data_test11['DATE']
 
+pc = PCA()
+red = pc.fit_transform(data_train11)
+redtest = pc.transform(data_test11)
+redv = pc.transform(validation_data)
+redtestv = pc.transform()
+
+rg = Ridge( random_state=0)
+rg_pc = Ridge( random_state=0)
+
+rg.fit(red, gspc_px_train11)
+
+rg_pc.fit(red, gspc_px_train11)
+
+rg.score(data_test11,gspc_px_test11 )
+
+rg.score(validation_data, validation_gspc_px )
+
+rg_pc.score(redv, validation_gspc_px)

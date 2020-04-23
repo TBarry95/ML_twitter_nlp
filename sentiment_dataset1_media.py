@@ -55,46 +55,96 @@ print("# -- 1. Multinomial Naive Bayes  -- #")
 print("# -- 2. Bernoulli Naive Bayes  -- #")
 
 # -- Train Multinomial NB on Twitter dataset from Kaggle:
-nb_train, nb_test, nb_train_sent, nb_test_sent = train_test_split(label_tweet_smaller['PROCESSED_TEXT'], label_tweet_smaller['sentiment'], test_size=0.3, random_state=0)
+for i in [0.05, 0.1, 0.2, 0.3, 0.4, 0.5]:
+    nb_train, nb_test, nb_train_sent, nb_test_sent = train_test_split(label_tweet_smaller['PROCESSED_TEXT'], label_tweet_smaller['sentiment'], test_size=i, random_state=0)
 
-from sklearn.feature_extraction.text import CountVectorizer
-count_vect = CountVectorizer()
-X_train_counts = count_vect.fit_transform(nb_train)
-X_test_counts = count_vect.transform(nb_test)
-tweets_counts = count_vect.transform([str(i) for i in df_all_tweets["PROCESSED_TEXT"]]) # ensuring all string formatted
+    from sklearn.feature_extraction.text import CountVectorizer
+    count_vect = CountVectorizer()
+    X_train_counts = count_vect.fit_transform(nb_train)
+    X_test_counts = count_vect.transform(nb_test)
+    tweets_counts = count_vect.transform([str(i) for i in df_all_tweets["PROCESSED_TEXT"]]) # ensuring all string formatted
 
-from sklearn.feature_extraction.text import TfidfTransformer
-tfidf_transformer = TfidfTransformer()
-X_train_tfidf = tfidf_transformer.fit_transform(X_train_counts)
-X_test_tfidf = tfidf_transformer.transform(X_test_counts)
-tweets_counts_tfidf = tfidf_transformer.transform(tweets_counts)
+    from sklearn.feature_extraction.text import TfidfTransformer
+    tfidf_transformer = TfidfTransformer()
+    X_train_tfidf = tfidf_transformer.fit_transform(X_train_counts)
+    X_test_tfidf = tfidf_transformer.transform(X_test_counts)
+    tweets_counts_tfidf = tfidf_transformer.transform(tweets_counts)
 
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.naive_bayes import BernoulliNB
-nb = MultinomialNB()
-nb.fit(X_train_tfidf, nb_train_sent)
-pred_nb = nb.predict(X_test_tfidf)
-pred_nb_all = nb.predict(tweets_counts_tfidf)
+    from sklearn.naive_bayes import MultinomialNB
+    from sklearn.naive_bayes import BernoulliNB
+    nb = MultinomialNB()
+    nb.fit(X_train_tfidf, nb_train_sent)
+    pred_nb = nb.predict(X_test_tfidf)
+    pred_nb_all = nb.predict(tweets_counts_tfidf)
 
-bn = BernoulliNB()
-bn.fit(X_train_tfidf, nb_train_sent)
-pred_bn = bn.predict(X_test_tfidf)
-pred_bn_all = bn.predict(tweets_counts_tfidf)
+    bn = BernoulliNB()
+    bn.fit(X_train_tfidf, nb_train_sent)
+    pred_bn = bn.predict(X_test_tfidf)
+    pred_bn_all = bn.predict(tweets_counts_tfidf)
 
-from sklearn import metrics
-from sklearn.metrics import confusion_matrix
+    from sklearn import metrics
+    from sklearn.metrics import confusion_matrix
 
-# -- test lexicon: manually run check to see how many are correctly labelled
-lex_test_cont = fns.get_sentiment_lex_cont(nb_test)
-lex_test =  [1 if i > 0 else -1 for i in lex_test_cont]
-# -- find how many are correct:
-true = []
-false = []
-for i,j in zip(lex_test,nb_test_sent):
-    if i == j:
-        true.append(True)
-    else:
-        false.append(False)
+    # -- test lexicon: manually run check to see how many are correctly labelled
+    lex_test_cont = fns.get_sentiment_lex_cont(nb_test)
+    lex_test =  [1 if ii > 0 else -1 for ii in lex_test_cont]
+    # -- find how many are correct:
+    true = []
+    false = []
+    for ii,j in zip(lex_test,nb_test_sent):
+        if ii == j:
+            true.append(True)
+        else:
+            false.append(False)
+    print("Test size", "Accuracy of Multinomial Naive Bayes Classifier:", nb.score(X_test_tfidf, nb_test_sent))
+    print(i, "      Accuracy of Multinomial Naive Bayes Classifier:", nb.score(X_test_tfidf, nb_test_sent))
+    print(i, "      Accuracy of Bernoulli Naive Bayes Classifier:", bn.score(X_test_tfidf, nb_test_sent))
+
+
+for i in [0,2,4,6,8,10]:
+    nb_train, nb_test, nb_train_sent, nb_test_sent = train_test_split(label_tweet_smaller['PROCESSED_TEXT'], label_tweet_smaller['sentiment'], test_size=0.3, random_state=0)
+
+    from sklearn.feature_extraction.text import CountVectorizer
+    count_vect = CountVectorizer()
+    X_train_counts = count_vect.fit_transform(nb_train)
+    X_test_counts = count_vect.transform(nb_test)
+    tweets_counts = count_vect.transform([str(i) for i in df_all_tweets["PROCESSED_TEXT"]]) # ensuring all string formatted
+
+    from sklearn.feature_extraction.text import TfidfTransformer
+    tfidf_transformer = TfidfTransformer()
+    X_train_tfidf = tfidf_transformer.fit_transform(X_train_counts)
+    X_test_tfidf = tfidf_transformer.transform(X_test_counts)
+    tweets_counts_tfidf = tfidf_transformer.transform(tweets_counts)
+
+    from sklearn.naive_bayes import MultinomialNB
+    from sklearn.naive_bayes import BernoulliNB
+    nb = MultinomialNB(alpha=i)
+    nb.fit(X_train_tfidf, nb_train_sent)
+    pred_nb = nb.predict(X_test_tfidf)
+    pred_nb_all = nb.predict(tweets_counts_tfidf)
+
+    bn = BernoulliNB(alpha=i)
+    bn.fit(X_train_tfidf, nb_train_sent)
+    pred_bn = bn.predict(X_test_tfidf)
+    pred_bn_all = bn.predict(tweets_counts_tfidf)
+
+    from sklearn import metrics
+    from sklearn.metrics import confusion_matrix
+
+    # -- test lexicon: manually run check to see how many are correctly labelled
+    lex_test_cont = fns.get_sentiment_lex_cont(nb_test)
+    lex_test =  [1 if ii > 0 else -1 for ii in lex_test_cont]
+    # -- find how many are correct:
+    true = []
+    false = []
+    for ii,j in zip(lex_test,nb_test_sent):
+        if ii == j:
+            true.append(True)
+        else:
+            false.append(False)
+    print("Laplace Smoothing", "Accuracy of Multinomial Naive Bayes Classifier:", nb.score(X_test_tfidf, nb_test_sent))
+    print(i, "       Accuracy of Multinomial Naive Bayes Classifier:", nb.score(X_test_tfidf, nb_test_sent))
+    print(i, "       Accuracy of Bernoulli Naive Bayes Classifier:", bn.score(X_test_tfidf, nb_test_sent))
 
 print("##########################################################")
 print("##########################################################")
@@ -116,6 +166,9 @@ print(metrics.confusion_matrix(pred_nb, nb_test_sent))
 # Cant verify if right or wrong, but assuming 77% right
 print("##########################################################")
 print("##########################################################")
+
+# label_tweet_smaller['PROCESSED_TEXT'], label_tweet_smaller['sentiment']
+# Necessary imports:
 
 # -- NB feature for predicitve analysis:
 df_all_tweets['NB_SENTIMENT'] = pred_bn_all
