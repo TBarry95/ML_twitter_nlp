@@ -31,9 +31,10 @@ new_data_reduce3 = all_data
 # 1. Explore dataset.
 # 2. Split dataset: Train, test, validation and all.
 #  -- Linear Regression: Using All variables vs VIF results
-#  -- PCA: Principal Component Analysis: PCA done on each dataset sepearately
-#  -- PCR: Principal Component Regression: PCA done on each dataset sepearately
-#  -- PCA and PCR:
+#  -- Ridge Regression: Using All variables vs VIF results
+#  -- PCA: Principal Component Analysis.
+#  -- PCR: Principal Component Regression: Linear
+#  -- PCR: Principal Component Regression: Ridge
 # 7. Cross validation LR models
 ######################################################################################
 
@@ -156,6 +157,47 @@ print("##########################################################")
 print("##########################################################")
 
 #########################################################
+# 3. Ridge Regression: All Variables v VIF
+#########################################################
+
+###############################################
+# 1. Run OLS regression using ALL predictors:
+###############################################
+
+
+# -- Find Metrics and Visualise:
+print("# -- Test Results - OLS: All", len(data_train.columns), "Variables  -- #")
+print('Mean Squared Error:', mean_squared_error(gspc_px_test, predictions_test))
+print('Mean Absolute Error:', mean_absolute_error(gspc_px_test, predictions_test))
+print('Root Mean Squared Error:', np.sqrt(mean_squared_error(gspc_px_test, predictions_test)))
+print('R-Squared:', r2_score(gspc_px_test, predictions_test))
+print('Median Absolute Error:', median_absolute_error(gspc_px_test, predictions_test))
+print("##########################################################")
+print("##########################################################")
+
+###############################################
+# 2. Run OLS regression using VIF predictors:
+###############################################
+
+
+print("# -- Strong results but too many variables, need to reduce dimensions:  -- #")
+print("# -- 1. Using VIF variables  -- #")
+print("# -- 2. Using PCA variables  -- #")
+print("##########################################################")
+print("##########################################################")
+
+# -- Find Metrics and Visualise:
+print("# -- Test Results - OLS: VIF Variables -- #")
+print('Mean Squared Error:', mean_squared_error(gspc_px_test, prediction_vif))
+print('Mean Absolute Error:', mean_absolute_error(gspc_px_test, prediction_vif))
+print('Root Mean Squared Error:', np.sqrt(mean_squared_error(gspc_px_test, prediction_vif)))
+print('R-Squared:', r2_score(gspc_px_test, prediction_vif))
+print('Median Absolute Error:', median_absolute_error(gspc_px_test, prediction_vif))
+print("##########################################################")
+print("##########################################################")
+
+
+#########################################################
 # 4. PCA: Principal Component Analysis: K-fold validation
 #########################################################
 
@@ -198,7 +240,6 @@ plt.xlabel('Principal Components in Linear Regression Model')
 plt.ylabel('% Variance Explained')
 plt.title('Elbow Chart - Variance Explained by Principal Component')
 plt.show()
-
 
 #########################################################
 # PCR: Principal Component Regression: Train and test (apply pca to both train and test)
