@@ -8,15 +8,9 @@ from sklearn.model_selection import train_test_split
 import pandas as pd
 import warnings
 warnings.simplefilter("ignore")
-from sklearn.decomposition import PCA
-from sklearn import model_selection
 from matplotlib import pyplot as plt
-from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import Ridge
-from sklearn.preprocessing import scale
 from sklearn.metrics import *
-import seaborn as sns
-from statsmodels.stats.outliers_influence import variance_inflation_factor
 from matplotlib.pyplot import ion
 ion() # enables interactive mode
 from sklearn.model_selection import GridSearchCV
@@ -41,11 +35,11 @@ del new_data_reduce3['GSPC_HIGH']
 #########################################################
 
 # -- Extract validation subset: Keeping for last - never tested on
-validation_data = new_data_reduce3[int(len(new_data_reduce3)*0.85):]
-validation_gspc_px = gspc_px[int(len(gspc_px)*0.85):]
+validation_data = new_data_reduce3[int(len(new_data_reduce3)*0.99):]
+validation_gspc_px = gspc_px[int(len(gspc_px)*0.99):]
 # -- Test / Train split:
-non_validation_data = new_data_reduce3[:int(len(new_data_reduce3)*0.85)]
-non_validation_gspc = gspc_px[:int(len(gspc_px)*0.85)]
+non_validation_data = new_data_reduce3[:int(len(new_data_reduce3)*0.99)]
+non_validation_gspc = gspc_px[:int(len(gspc_px)*0.99)]
 
 data_train, data_test, gspc_px_train, gspc_px_test = train_test_split(non_validation_data, non_validation_gspc, test_size=0.3, random_state=0, shuffle=True)
 val_date = validation_data['DATE']
@@ -75,7 +69,9 @@ ridge_cv1.predict(data_test)
 ridge_cv1.score(data_test, gspc_px_test)
 df_coef = pd.DataFrame()
 df_coef['coef'] = [i for i in ridge_cv1.coef_]
-df_coef['p'] = [i for i in data_train.columns]
+df_coef['predictor'] = [i for i in data_train.columns]
+print("Coefficients: ")
+print(df_coef)
 
 # -- Test regression using ALL predictors:
 predictions_test = ridge_cv1.predict(data_test)
@@ -89,6 +85,18 @@ print('R-Squared:', r2_score(gspc_px_test, predictions_test))
 print('Median Absolute Error:', median_absolute_error(gspc_px_test, predictions_test))
 print("##########################################################")
 print("##########################################################")
+
+from yellowbrick.regressor import ResidualsPlot
+plt.figure()
+visualizer = ResidualsPlot(ridge_cv1)
+visualizer.fit(data_train, gspc_px_train) # Fit the training data to the visualizer
+visualizer.score(data_test, gspc_px_test)  # Evaluate the model on the test data
+visualizer.show()                 # Finalize and render the figure
+print("Residuals distribution is notquite normal")
+
+# -- Compare results in table format:
+df_compare = pd.DataFrame({'ACTUAL_PRICE': gspc_px_test, 'PREDICTED_PRICE': predictions_test.flatten()})
+# print(df_compare.head(30))
 
 ###############################################
 # 1. Validate Ridge regression using ALL predictors:

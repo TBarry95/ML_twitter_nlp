@@ -138,6 +138,7 @@ for i in [0,2,4,6,8,10]:
     # -- find how many are correct:
     true = []
     false = []
+
     for ii,j in zip(lex_test,nb_test_sent):
         if ii == j:
             true.append(True)
@@ -153,11 +154,13 @@ print("# -- Evaluation of classification models: Accuracy tests: -- #")
 print("Accuracy of Lexicon-Based Sentiment Classifier:", len(true)/len(nb_test))
 print("Accuracy of Multinomial Naive Bayes Classifier:", nb.score(X_test_tfidf, nb_test_sent))
 print("Accuracy of Bernoulli Naive Bayes Classifier:", bn.score(X_test_tfidf, nb_test_sent))
+
 print("Applying Bernoulli NB as a predictor variable for stock prices")
 print("Bernoulli NB Report:")
 print(metrics.classification_report(pred_bn, nb_test_sent))
 print("Bernoulli NB Confusion Matrix:")
 print(metrics.confusion_matrix(pred_bn, nb_test_sent))
+
 print("##########################################################")
 print("##########################################################")
 print("Multinomial  NB Report:")
@@ -167,6 +170,13 @@ print(metrics.confusion_matrix(pred_nb, nb_test_sent))
 # Cant verify if right or wrong, but assuming 77% right
 print("##########################################################")
 print("##########################################################")
+
+print("##########################################################")
+print("##########################################################")
+print("Lexicon Report:")
+print(metrics.classification_report(lex_test, nb_test_sent))
+print("Lexicon Confusion Matrix:")
+print(metrics.confusion_matrix(lex_test, nb_test_sent))
 
 # label_tweet_smaller['PROCESSED_TEXT'], label_tweet_smaller['sentiment']
 # Necessary imports:

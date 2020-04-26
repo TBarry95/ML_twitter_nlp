@@ -74,6 +74,13 @@ pred_bn = bn.predict(X_test_tfidf)
 from sklearn import metrics
 
 print("Accuracy of Multinomial Naive Bayes Classifier:", mnb.score(X_test_tfidf, nb_test_sent))
+print("Multinomial NB Report:")
+print(metrics.classification_report(mnb.predict(X_test_tfidf), nb_test_sent))
+print("Multinomial NB Confusion Matrix:")
+print(metrics.confusion_matrix(mnb.predict(X_test_tfidf), nb_test_sent))
+print("##########################################################")
+print("##########################################################")
+
 print("Accuracy of Bernoulli Naive Bayes Classifier:", bn.score(X_test_tfidf, nb_test_sent))
 print("Applying Bernoulli NB as a predictor variable for stock prices")
 print("Bernoulli NB Report:")

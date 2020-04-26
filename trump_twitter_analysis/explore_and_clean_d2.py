@@ -84,7 +84,7 @@ print("Dropped all columns which have more than", missing_val_param*100, "% miss
 print("For Trump tweets, all columns are populated and no columns are dropped")
 
 # -- Deal with NA values: Back fill followed by forward fill
-msno.matrix(trump_tweets, figsize= (50,30))
+# msno.matrix(trump_tweets, figsize= (50,30))
 trump_tweets = trump_tweets.fillna(method='bfill')
 trump_tweets = trump_tweets.fillna(method='ffill')
 msno.matrix(trump_tweets, figsize= (50,30))

@@ -57,19 +57,28 @@ print("##########################################################")
 # 2. Split datasets:
 #########################################################
 
-data_train, data_test, gspc_px_train, gspc_px_test = train_test_split(new_data_reduce3, gspc_px, test_size=0.3, random_state=0, shuffle=True)
+# -- Extract validation subset: Keeping for last - never tested on
+validation_data = new_data_reduce3[int(len(new_data_reduce3)*0.99):]
+validation_gspc_px = gspc_px[int(len(gspc_px)*0.99):]
+# -- Test / Train split:
+non_validation_data = new_data_reduce3[:int(len(new_data_reduce3)*0.99)]
+non_validation_gspc = gspc_px[:int(len(gspc_px)*0.99)]
 
+data_train, data_test, gspc_px_train, gspc_px_test = train_test_split(non_validation_data, non_validation_gspc, test_size=0.3, random_state=0, shuffle=True)
+val_date = validation_data['DATE']
+del validation_data['DATE']
 train_date = data_train['DATE']
 test_date = data_test['DATE']
 del data_train['DATE']
 del data_test['DATE']
+del non_validation_data['DATE']
 
 #########################################################
-# 3. Linear Regression: All Variables v VIF
+# Linear Regression: All Variables v VIF
 #########################################################
 
 ###############################################
-# 1. Run OLS regression using ALL predictors:
+#  Run OLS regression using ALL predictors:
 ###############################################
 lr_model_all_vars = LinearRegression()
 lr_model_all_vars.fit(data_train, gspc_px_train)
@@ -93,7 +102,7 @@ df['PREDICTOR'] = [i for i in data_train.columns]
 print(df)
 
 ###############################################
-# 2. Run OLS regression using VIF predictors:
+#  Run OLS regression using VIF predictors:
 ###############################################
 lr_model_vif_vars = LinearRegression()
 lr_model_vif_vars.fit(data_train[[i for i in vif_factors]], gspc_px_train)
@@ -116,8 +125,8 @@ print("##########################################################")
 ###########################################
 from yellowbrick.regressor import ResidualsPlot
 
+plt.figure()
 visualizer = ResidualsPlot(lr_model_all_vars)
-
 visualizer.fit(data_train, gspc_px_train)  # Fit the training data to the visualizer
 visualizer.score(data_test, gspc_px_test)  # Evaluate the model on the test data
 visualizer.show()                 # Finalize and render the figure
@@ -125,3 +134,40 @@ visualizer.show()                 # Finalize and render the figure
 print("Too many dimensions, need to reduce")
 print("Coefficients are unstable - need to do PCA")
 print("Residual distribution does not follow a proper normal distribution")
+
+###########################################
+# Validation dataset
+###########################################
+
+print("# -- Validation Results - Linear regression: All", len(data_train.columns), "Variables  -- #")
+
+val_all_pred = lr_model_all_vars.predict(validation_data)
+
+# -- Find Metrics and Visualise:
+print('Mean Squared Error:', mean_squared_error(validation_gspc_px, val_all_pred))
+print('Mean Absolute Error:',  mean_absolute_error(validation_gspc_px, val_all_pred))
+print('Root Mean Squared Error:', np.sqrt( mean_squared_error(validation_gspc_px, val_all_pred)))
+print('R-Squared:', r2_score(validation_gspc_px, val_all_pred))
+print('Median Absolute Error:', median_absolute_error(validation_gspc_px, val_all_pred))
+print("##########################################################")
+print("##########################################################")
+
+df_val_all_compare = pd.DataFrame({"DATE":val_date,'ACTUAL_PRICE': validation_gspc_px,'PREDICTED_PRICE': val_all_pred.flatten()})
+
+print("# -- Validation Results - Comprare: All Variables -- #")
+print(df_val_all_compare.tail(10))
+print("##########################################################")
+print("##########################################################")
+
+# -- Plot Predictions against Actual Prices:
+plt.figure()
+plot1, = plt.plot([i for i in range(0,len(df_val_all_compare.index))], df_val_all_compare['ACTUAL_PRICE'])
+plot2, = plt.plot([i for i in range(0,len(df_val_all_compare.index))], df_val_all_compare['PREDICTED_PRICE'])
+plt.xlabel('Number of days before April 16th 2020')
+plt.ylabel('Price of S&P500')
+plt.title('Linear Regression - Comparison of Actual vs Predicted Prices')
+plt.legend((plot1, plot2), ('S&P500 - Actual', 'S&P500 - Predicted'))
+plt.show()
+
+print("##########################################################")
+print("##########################################################")

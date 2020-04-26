@@ -29,7 +29,7 @@ all_data = pd.read_csv(r".\trump_data_cleaned.csv")
 
 ind_vars = all_data[[ 'MEAN_SENT_LEX_CATG', 'MEAN_SENT_LEX_POL', 'MEAN_SENT_NB',
        'PCT_SENT_NB', 'PCT_SENT_LEX_CATG', 'PCT_SENT_LEX_POL',
-       'DIRECTION_LEX_CATG', 'DIRECTION_LEX_POL', 'DIRECTION_NB', 'TWEET_COUNT',  'FAV_COUNT', 'RT_COUNT']]
+       'DIRECTION_LEX_CATG', 'DIRECTION_LEX_POL', 'DIRECTION_NB', 'TWEET_COUNT',  'RT_COUNT']]
 
 dep_var1 = all_data['SP_CLOSE']
 dep_var2 = all_data['SP_DIRECTION']
@@ -74,54 +74,20 @@ print("Mean accuracy: ", out_3[1])
 print("##########################################################")
 print("##########################################################")
 
-'''
-all_fts = ['MEAN_SENT_LEX_CATG', 'MEAN_SENT_LEX_POL', 'MEAN_SENT_NB',
-       'PCT_SENT_NB', 'PCT_SENT_LEX_CATG', 'PCT_SENT_LEX_POL',
-       'TWEET_COUNT', 'FAV_COUNT', 'RT_COUNT']
-
-combos = []
-import itertools
-for L in range(0, len(all_fts)+1):
-    for subset in itertools.combinations(all_fts, L):
-        combos.append(list(subset))
-
-acc = []
-for i in range(1, len(combos)):
-    log = logistic_regression(data_train_log, data_test_log, price_train_log, price_test_log, combos[i])
-    acc.append([log[1], combos[i], log[4]])
-
-
-best_sc1 = sorted(acc)[-1]
-df1 = pd.DataFrame()
-df1['coef'] = best_sc1[2][0]
-df1['fts'] = best_sc1[1]
-
-plt.figure()
-plt.plot([i[0] for i in acc])
-plt.xlabel("Set of Combinations of all features")
-plt.ylabel("Mean Accuracy")
-plt.title("All Possible Logistic Regression Models - Mean Accuracy")
-
-
-'''
-
-
 
 print("# -- Grid Search Cross Validation -- #")
 from sklearn.model_selection import GridSearchCV
 logit_grid = LogisticRegression()
-
 param_grid = {'C':  [0.0001, 0.001, 0.01, 0.1, 1, 10, 100, 1000]}
-grid_search = GridSearchCV(estimator = logit_grid, param_grid = param_grid, cv = 10, n_jobs = -1)
-
-grid_search.fit(data_train_log, data_test_log)
+grid_search = GridSearchCV(estimator = logit_grid, param_grid = param_grid, cv = 11, n_jobs = -1)
+grid_search.fit(data_train_log, price_train_log)
 opt_param = grid_search.best_params_
-
-
-logit_modelbest = LogisticRegression(C=1)
-logit_modelbest.fit(data_train_log[best_sc[1]], price_train_log)
-predS = logit_modelbest.predict(data_test_log[best_sc[1]])  # predcition
-accuracyS = logit_modelbest.score(data_test_log[best_sc[1]],price_test_log)  # Return t
+print("Best logistic regression model: ")
+print(opt_param)
+logit_modelbest = LogisticRegression(C=0.001)
+logit_modelbest.fit(data_train_log, price_train_log)
+predS = logit_modelbest.predict(data_test_log)  # predcition
+accuracyS = logit_modelbest.score(data_test_log,price_test_log)  # Return t
 
 
 

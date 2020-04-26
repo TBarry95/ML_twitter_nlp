@@ -40,7 +40,7 @@ print("##########################################################")
 ###############################################
 print("# -- Checking Null Values: -- #")
 # -- get % of missing values for each column:
-msno.matrix(all_data)
+# msno.matrix(all_data)
 missing_val_summary = all_data.isna().mean()
 percent_missing = (sum(missing_val_summary) / len(missing_val_summary) )*100
 print("Missing values %: ", percent_missing)
@@ -75,10 +75,9 @@ missing_val_summary1 = new_data_reduce1.isna().mean()
 percent_missing1 = (sum(missing_val_summary1) / len(missing_val_summary1) )*100
 print("Missing values %: ", percent_missing1)
 
-msno.matrix(new_data_reduce1)
+# msno.matrix(new_data_reduce1)
 
 new_data_reduce2 = new_data_reduce1.fillna(method='ffill')
-msno.matrix(new_data_reduce2)
 
 #####################################
 # Impute values: Back fill: Appropriate for stock timeseries data
@@ -92,7 +91,7 @@ print("##########################################################")
 
 # -- Check data: clean dataset:
 msno.matrix(new_data_reduce3)
-sns.heatmap(new_data_reduce3.isnull(), cbar=False)
+# sns.heatmap(new_data_reduce3.isnull(), cbar=False)
 
 df_summary = new_data_reduce3.describe()
 

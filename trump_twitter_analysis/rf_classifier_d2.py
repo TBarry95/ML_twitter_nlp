@@ -15,6 +15,8 @@ from sklearn.model_selection import train_test_split
 import seaborn as sns
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import *
 
 ##########################################################################
 # EXTRACT:
@@ -33,7 +35,6 @@ dep_var1 = all_data['SP_CLOSE']
 dep_var2 = all_data['SP_DIRECTION']
 
 # --  Random Forest
-data_train_rf, data_test_rf, price_train_rf, price_test_rf = train_test_split(ind_vars,dep_var1 , test_size=0.2, random_state=0, shuffle=True)
 data_train_log, data_test_log, price_train_log, price_test_log = train_test_split(ind_vars, dep_var2, test_size=0.2, random_state=0, shuffle=True)
 
 ##########################################
@@ -49,4 +50,36 @@ print("# -- Test Results - Random forest Classifier: ")
 print("Mean Accuracy: ", acc_rfc)
 print("##########################################################")
 print("##########################################################")
+
+
+print("# -- Grid Search Corss validation -- #")
+
+param_grid = {
+    'bootstrap': [True],
+    'max_depth': [30, 110,  250],
+    'min_samples_leaf': [2, 4, 10],
+    'min_samples_split': [6, 8, 12],
+    'n_estimators': [300, 1000, 2000]
+}
+
+rfc = RandomForestClassifier()
+grid_search = GridSearchCV(estimator = rfc, param_grid = param_grid, cv = 3, n_jobs = -1)
+grid_search.fit(data_train_log, price_train_log)
+opt_param = grid_search.best_params_
+
+rfc_opt = RandomForestClassifier(bootstrap=True, max_depth= 250,min_samples_leaf= 2, min_samples_split= 6,n_estimators= 2000)
+rfc_opt.fit(data_train_log, price_train_log)
+acc_2 = rfc_opt.score(data_test_log, price_test_log)
+p1  = rfc_opt.predict(data_test_log)
+
+print("# -- Test Results - Random Forest: Grid search - Optimal Model -- #")
+print(opt_param)
+print("Mean accuracy: ", acc_2)
+print(classification_report(price_test_log, p1))
+print("Confusion matrix: ")
+print(confusion_matrix(price_test_log, p1))
+print("##########################################################")
+print("##########################################################")
+
+
 

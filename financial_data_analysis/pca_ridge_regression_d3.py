@@ -133,11 +133,38 @@ for i in [1,2,3,4,5,6,7,8,10,12,14,16]:
     print("##########################################################")
     print("##########################################################")
 
+'''params = {'alpha': [0.001, 0.01, 0.03, 0.05, 0.06, 0.08, 0.1, 0.13, 0.15, 0.2, 0.4, 0.6, 0.8, 1, 5, 15, 20, 25, 30]}
+ridge_reg = GridSearchCV(ridge_cv, params, scoring='neg_mean_squared_error', cv=20)
+ridge_reg.fit(data_train, gspc_px_train)'''
+
+
+from sklearn.model_selection import GridSearchCV
+params = {'alpha': [0.15, 0.2, 0.4, 0.6, 0.8, 1, 2, 3, 4, 5, 5.5,6, 7, 8, 9, 10 , 11 ,15, 20, 25, 30]}
+ridge_pcacv = Ridge()
+
+ridge_reg = GridSearchCV(ridge_pcacv, params, scoring='neg_mean_squared_error', cv=20)
+ridge_reg.fit(data_reduced_train[:,:5], gspc_px_train)
+
+print(ridge_reg.best_score_)
+print(ridge_reg.best_params_)
+
+ridge_pcacv = Ridge(alpha=6, random_state=1)
+ridge_pcacv.fit(data_reduced_train[:,:5], gspc_px_train)
+
+from yellowbrick.regressor import ResidualsPlot
+plt.figure()
+visualizer = ResidualsPlot(ridge_pcacv)
+visualizer.fit(data_reduced_train[:,:5], gspc_px_train)  # Fit the training data to the visualizer
+visualizer.score(data_reduced_test[:,:5], gspc_px_test)  # Evaluate the model on the test data
+visualizer.show()                 # Finalize and render the figure
+
 # -- Compare results in table format:
 df_compare = pd.DataFrame({'ACTUAL_PRICE': gspc_px_test, 'PREDICTED_PRICE': predictions_2.flatten()})
 # print(df_compare.head(30))
 
-
+# -- Compare results in table format:
+df_compare = pd.DataFrame({'ACTUAL_PRICE': gspc_px_test, 'PREDICTED_PRICE': predictions_2.flatten()})
+# print(df_compare.head(30))
 
 
 '''
