@@ -92,7 +92,7 @@ print(missing_data)
 ##########################################
 # 1. Clean Tweets from tweepy
 ##########################################
-msno.matrix(new_data, figsize= (50,30))
+# .matrix(new_data, figsize= (50,30))
 print("##########################################################")
 print("##########################################################")
 print("# -- Get word cloud before text processing -- #")

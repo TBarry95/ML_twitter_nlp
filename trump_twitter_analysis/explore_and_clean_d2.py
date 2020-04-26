@@ -71,9 +71,9 @@ print("##########################################################")
 
 missing_val_summary = trump_tweets.isna().mean()
 missing_val_summary = pd.DataFrame(missing_val_summary)
+missing_val_summary.plot(kind='bar',legend=False, title="Proportion of Missing Values: Trump Tweets")
 missing_val_summary = missing_val_summary.reset_index()
 missing_val_summary.columns = ['FIELD', 'MEAN']
-missing_val_summary.plot(kind='bar')
 missing_val_param = 0.20
 new_data_cols = missing_val_summary['FIELD'][missing_val_summary['MEAN'] <= missing_val_param]
 
