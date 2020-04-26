@@ -19,6 +19,7 @@ import seaborn as sns
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 from matplotlib.pyplot import ion
 ion() # enables interactive mode
+from sklearn.model_selection import GridSearchCV
 
 new_data_reduce3 = pd.read_csv(r".\quant_data_cleaned.csv")
 
@@ -34,7 +35,6 @@ del new_data_reduce3['GSPC_LOW']
 del new_data_reduce3['GSPC_ADJ_CLOSE']
 del new_data_reduce3['GSPC_VOL']
 del new_data_reduce3['GSPC_HIGH']
-
 
 #########################################################
 #  Split datasets:
@@ -58,10 +58,27 @@ del data_test['DATE']
 ###############################################
 #  Run Ridge regression using ALL predictors:
 ###############################################
-ridge_all =  Ridge()
-ridge_all.fit(data_train, gspc_px_train)
+
+print("# -- Ridge Cross Validation: -- #")
+ridge_cv = Ridge()
+params = {'alpha': [0.001, 0.01, 0.03, 0.05, 0.06, 0.08, 0.1, 0.13, 0.15, 0.2, 0.4, 0.6, 0.8, 1, 5, 15, 20, 25, 30]}
+ridge_reg = GridSearchCV(ridge_cv, params, scoring='neg_mean_squared_error', cv=20)
+ridge_reg.fit(data_train, gspc_px_train)
+
+print("Best alpha regularisation parameter: ", ridge_reg.best_params_)
+print("Best MSE : ", ridge_reg.best_score_)
+
+ridge_cv1 = Ridge(alpha=0.13)
+
+ridge_cv1.fit(data_train, gspc_px_train)
+ridge_cv1.predict(data_test)
+ridge_cv1.score(data_test, gspc_px_test)
+df_coef = pd.DataFrame()
+df_coef['coef'] = [i for i in ridge_cv1.coef_]
+df_coef['p'] = [i for i in data_train.columns]
+
 # -- Test regression using ALL predictors:
-predictions_test = ridge_all.predict(data_test)
+predictions_test = ridge_cv1.predict(data_test)
 
 # -- Find Metrics and Visualise:
 print("# -- Test Results - Ridge: All", len(data_train.columns), "Variables  -- #")
@@ -77,9 +94,9 @@ print("##########################################################")
 # 1. Validate Ridge regression using ALL predictors:
 ###############################################
 
-print("# -- Validation Results - OLS: All", len(data_train.columns), "Variables  -- #")
+print("# -- Validation Results - Ridge: All", len(data_train.columns), "Variables  -- #")
 
-val_all_pred = ridge_all.predict(validation_data)
+val_all_pred = ridge_cv1.predict(validation_data)
 
 # -- Find Metrics and Visualise:
 print('Mean Squared Error:', mean_squared_error(validation_gspc_px, val_all_pred))
@@ -89,6 +106,7 @@ print('R-Squared:', r2_score(validation_gspc_px, val_all_pred))
 print('Median Absolute Error:', median_absolute_error(validation_gspc_px, val_all_pred))
 print("##########################################################")
 print("##########################################################")
+
 df_val_all_compare = pd.DataFrame({"DATE":val_date,'ACTUAL_PRICE': validation_gspc_px,'PREDICTED_PRICE': val_all_pred.flatten()})
 
 print("# -- Validation Results - Comprare: All Variables -- #")
@@ -108,4 +126,5 @@ plt.show()
 
 print("##########################################################")
 print("##########################################################")
+
 

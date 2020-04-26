@@ -40,7 +40,6 @@ new_data_reduce3 = all_data
 ###############################################
 
 gspc_px = new_data_reduce3['GSPC_CLOSE']
-del new_data_reduce3['GSPC_CLOSE']
 del new_data_reduce3['GSPC_OPEN']
 del new_data_reduce3['GSPC_LOW']
 del new_data_reduce3['GSPC_ADJ_CLOSE']
@@ -58,6 +57,8 @@ f, ax = plt.subplots(figsize=(12, 10))
 col_map = sns.diverging_palette(220, 10, as_cmap=True)
 sns.heatmap(corr_mx, mask=mask_values, cmap=col_map, center=0, annot=False,
             square=True, linewidths=.5, cbar_kws={"shrink": .5})
+
+del new_data_reduce3['GSPC_CLOSE']
 
 print("Correlation Matrix reveals significant multicollinearity")
 print("##########################################################")

@@ -25,8 +25,6 @@ from sklearn.metrics import *
 from tabulate import tabulate
 import itertools
 
-
-
 ##########################################################################
 # A. EXTRACT: Read in cleaned dataset
 ##########################################################################

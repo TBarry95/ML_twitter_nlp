@@ -143,7 +143,7 @@ for i in [0,2,4,6,8,10]:
             true.append(True)
         else:
             false.append(False)
-    print("Laplace Smoothing", "Model                   ", nb.score(X_test_tfidf, nb_test_sent))
+    print("Laplace Smoothing -- ", " -- Model --                  ", nb.score(X_test_tfidf, nb_test_sent))
     print(i, "               Accuracy of Multinomial Naive Bayes Classifier:", nb.score(X_test_tfidf, nb_test_sent))
     print(i, "               Accuracy of Bernoulli Naive Bayes Classifier:", bn.score(X_test_tfidf, nb_test_sent))
 

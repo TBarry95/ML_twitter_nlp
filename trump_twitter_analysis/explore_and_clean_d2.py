@@ -139,5 +139,5 @@ print("##########################################################")
 print("##########################################################")
 
 trump_tweets.to_csv("./cleaned_trump_tweets.csv", index=False)
-#label_tweet_smaller.to_csv("./label_tweet_smaller.csv", index=False)
-#gspc_df.to_csv("./gspc_df.csv")
+label_tweet_smaller.to_csv("./label_tweet_smaller.csv", index=False)
+gspc_df.to_csv("./gspc_df.csv")

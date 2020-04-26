@@ -37,7 +37,6 @@ import functions_nlp as fns
 ##########################################################################
 df_features = pd.read_csv(r".\media_data_cleaned.csv",)
 
-
 ##########################################
 # Split data:
 ##########################################
@@ -79,21 +78,20 @@ df_pcs_test_log = pd.DataFrame(data=data_reduced_test, columns=['PC1', 'PC2', 'P
 ##########################################################
 # Logistic Regression PCA
 ##########################################################
+acc = []
+for i in [1,2,3,4,5,6,7,8,9,10,11]:
+    logit_model = LogisticRegression()
+    logit_model.fit(df_pcs_train_log[:,:i], price_train_log)
+    pred = logit_model.predict(df_pcs_test_log[:,:i])  # predcition
+    accuracy = logit_model.score(df_pcs_test_log[:,:i],price_test_log) # Return the mean accuracy on the given test data and labels.
+    prob = logit_model.predict_proba(df_pcs_test_log[:,:i]) #	Probability estimates.
+    acc.append(accuracy)
 
-logit_model = LogisticRegression()
-logit_model.fit(df_pcs_train_log[['PC1', 'PC2', 'PC3', 'PC4', 'PC5']], price_train_log)
-pred = logit_model.predict(df_pcs_test_log[['PC1', 'PC2', 'PC3', 'PC4', 'PC5']])  # predcition
-accuracy = logit_model.score(df_pcs_test_log[['PC1', 'PC2', 'PC3', 'PC4', 'PC5']],price_test_log) # Return the mean accuracy on the given test data and labels.
-prob = logit_model.predict_proba(df_pcs_test_log[['PC1', 'PC2', 'PC3', 'PC4', 'PC5']]) #	Probability estimates.
 
 # -- Find Metrics and Visualise:
 print("# -- Test Results - PCA: 5 PC Logistic Regression -- #")
 print("Mean accuracy: ", accuracy)
-# -- Print Equation:
 intercept_log = logit_model.intercept_
 coefs = logit_model.coef_
-pc = ['PC1', 'PC2', 'PC3', 'PC4', 'PC5']
-print("Logit 5 PC's = ", intercept_log[0], '+ (', pc[0],round(coefs[0][0],3), ') + (' ,pc[1],round(coefs[0][1],3), ') + (', pc[2],round(coefs[0][2],3),
-      ') + (' ,pc[3],round(coefs[0][3],3), ') + (', pc[4],round(coefs[0][4],3), ')')
 print("##########################################################")
 print("##########################################################")

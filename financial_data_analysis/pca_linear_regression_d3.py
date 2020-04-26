@@ -40,7 +40,7 @@ del new_data_reduce3['GSPC_HIGH']
 # Split datasets:
 #########################################################
 
-# -- Extract validation subset: Keeping for last - never tested on
+'''# -- Extract validation subset: Keeping for last - never tested on
 validation_data = new_data_reduce3[int(len(new_data_reduce3)*0.85):]
 validation_gspc_px = gspc_px[int(len(gspc_px)*0.85):]
 # -- Test / Train split:
@@ -49,9 +49,10 @@ non_validation_gspc = gspc_px[:int(len(gspc_px)*0.85)]
 
 data_train, data_test, gspc_px_train, gspc_px_test = train_test_split(non_validation_data, non_validation_gspc, test_size=0.3, random_state=0, shuffle=True)
 val_date = validation_data['DATE']
-del validation_data['DATE']
-'''data_train, data_test, gspc_px_train, gspc_px_test = train_test_split(new_data_reduce3, gspc_px, test_size=0.2, random_state=0, shuffle=True)
-'''
+del validation_data['DATE']'''
+
+data_train, data_test, gspc_px_train, gspc_px_test = train_test_split(new_data_reduce3, gspc_px, test_size=0.2, random_state=0, shuffle=True)
+
 train_date = data_train['DATE']
 test_date = data_test['DATE']
 del data_train['DATE']
@@ -109,89 +110,84 @@ print("##########################################################")
 # PCR: Principal Component Regression: Train and test (apply pca to both train and test)
 #########################################################
 
-# -- Initialise PCA class
-pca3 = PCA()
-data_reduced_train = pca3.fit_transform(scale(data_train))
-data_reduced_test = pca3.fit_transform(scale(data_test))
-v = pca3.fit_transform(scale(validation_data))
-# -- Initialise LR model
-lr_model_pca = LinearRegression()
-# -- Fit LR model: 6 PC's based on Elbow graph
-lr_model_pca.fit(data_reduced_train[:,:15], gspc_px_train)
-# -- Run model:
-predictions_2 = lr_model_pca.predict(data_reduced_test[:,:15])
+for i in [1,2,3,4,5,6,7,8,10,12,14,16]:
+    # -- Initialise PCA class
+    pca3 = PCA()
+    data_reduced_train = pca3.fit_transform(scale(data_train))
+    data_reduced_test = pca3.fit_transform(scale(data_test))
+    #v = pca3.fit_transform(scale(validation_data))
+    # -- Initialise LR model
+    lr_model_pca = LinearRegression()
+    # -- Fit LR model: 6 PC's based on Elbow graph
+    lr_model_pca.fit(data_reduced_train[:,:i], gspc_px_train)
+    # -- Run model:
+    predictions_2 = lr_model_pca.predict(data_reduced_test[:,:i])
 
-# -- Find Metrics and Visualise:
-print("# -- Test Results - PCR: 15 PCA Variables -- #")
-print('Mean Squared Error:', mean_squared_error(gspc_px_test, predictions_2))
-print('Mean Absolute Error:', mean_absolute_error(gspc_px_test, predictions_2))
-print('Root Mean Squared Error:', np.sqrt(mean_squared_error(gspc_px_test, predictions_2)))
-print('R-Squared:', r2_score(gspc_px_test, predictions_2))
-print('Median Absolute Error:', median_absolute_error(gspc_px_test, predictions_2))
-print("##########################################################")
-print("##########################################################")
+    # -- Find Metrics and Visualise:
+    print("# -- Test Results - PCR: ",i, " PCA Variables -- #")
+    print('Mean Squared Error:', mean_squared_error(gspc_px_test, predictions_2))
+    print('Mean Absolute Error:', mean_absolute_error(gspc_px_test, predictions_2))
+    print('Root Mean Squared Error:', np.sqrt(mean_squared_error(gspc_px_test, predictions_2)))
+    print('R-Squared:', r2_score(gspc_px_test, predictions_2))
+    print('Median Absolute Error:', median_absolute_error(gspc_px_test, predictions_2))
+    print("##########################################################")
+    print("##########################################################")
+
+df = pd.DataFrame()
+d = data_reduced_train[:,:15].reshape(15,8578)
+df['pc1'] = d[0]
+df['pc2'] = d[1]
+df['pc3'] = d[2]
+df['pc4'] = d[3]
+df['pc5'] = d[4]
+df['pc6'] = d[5]
+df['pc7'] = d[6]
+df['pc8'] = d[7]
+df['pc9'] = d[8]
+df['pc10'] = d[9]
+df['pc11'] = d[10]
+df['pc12'] = d[11]
+df['pc13'] = d[12]
+df['pc14'] = d[13]
+corr_mx = df.corr()
+mask_values = np.triu(np.ones_like(corr_mx, dtype=np.bool))
+f, ax = plt.subplots(figsize=(12, 10))
+col_map = sns.diverging_palette(220, 10, as_cmap=True)
+sns.heatmap(corr_mx, mask=mask_values, cmap=col_map, center=0, annot=True,
+            square=True, linewidths=.5, cbar_kws={"shrink": .5})
+
+###########################################
+# residuals:
+###########################################
+
+from yellowbrick.regressor import ResidualsPlot
+plt.figure()
+visualizer = ResidualsPlot(lr_model_pca)
+visualizer.fit(data_reduced_train[:,:16], gspc_px_train)  # Fit the training data to the visualizer
+visualizer.score(data_reduced_test[:,:16], gspc_px_test)  # Evaluate the model on the test data
+visualizer.show()                 # Finalize and render the figure
 
 # -- Compare results in table format:
 df_compare = pd.DataFrame({'ACTUAL_PRICE': gspc_px_test, 'PREDICTED_PRICE': predictions_2.flatten()})
 # print(df_compare.head(30))
 
-# -- Initialise PCA class
-pca_1pc = PCA()
-data_reduced_train_1pc = pca_1pc.fit_transform(scale(data_train))
-data_reduced_test_1pc = pca_1pc.fit_transform(scale(data_test))
-# -- Initialise LR model
-lr_model_pca_1pc = LinearRegression()
-# -- Fit LR model: 6 PC's based on Elbow graph
-lr_model_pca_1pc.fit(data_reduced_train[:,:1], gspc_px_train)
-# -- Run model:
-predictions_2_1pc = lr_model_pca_1pc.predict(data_reduced_test[:,:1])
+'''
+###########################################
+# CV
+###########################################
 
-# -- Find Metrics and Visualise:
-print("# -- Test Results - PCR: 1 PCA Variables -- #")
-print('Mean Squared Error:', mean_squared_error(gspc_px_test, predictions_2_1pc))
-print('Mean Absolute Error:', mean_absolute_error(gspc_px_test, predictions_2_1pc))
-print('Root Mean Squared Error:', np.sqrt(mean_squared_error(gspc_px_test, predictions_2_1pc)))
-print('R-Squared:', r2_score(gspc_px_test, predictions_2_1pc))
-print('Median Absolute Error:', median_absolute_error(gspc_px_test, predictions_2_1pc))
-print("##########################################################")
-print("##########################################################")
+from sklearn.model_selection import cross_validate
+scores_lst = []
+for i in [2,3,4,5,6,7,8,10,12,14,16]:
+    # -- Initialise PCA class
+    pca3 = PCA()
+    data_reduced_train = pca3.fit_transform(scale(data_train))
+    data_reduced_test = pca3.fit_transform(scale(data_test))
+    lrm = LinearRegression()
+    scores = cross_validate(lrm, data_reduced_train[:,:], gspc_px_train,  cv=i, scoring=('r2'))
+    scores_lst.append(scores)
 
+'''
 
-###############################################
-# 2. Validate OLS regression using PCR predictors: When PCA is done at each stage
-###############################################
-
-pca_pcr = PCA()
-
-data_reduced_val = pca_pcr.fit_transform(scale(validation_data))
-val_pcr_pred = lr_model_pca.predict(data_reduced_val[:,:15])
-
-# -- Find Metrics and Visualise:
-print("# -- Validation Results - PCR: 10 PCA Variables -- #")
-print('Mean Squared Error:', mean_squared_error(validation_gspc_px, val_pcr_pred))
-print('Mean Absolute Error:',  mean_absolute_error(validation_gspc_px, val_pcr_pred))
-print('Root Mean Squared Error:', np.sqrt(mean_squared_error(validation_gspc_px, val_pcr_pred)))
-print('R-Squared:', r2_score(validation_gspc_px, val_pcr_pred))
-print('Median Absolute Error:', median_absolute_error(validation_gspc_px, val_pcr_pred))
-print("##########################################################")
-print("##########################################################")
-
-df_val_pcr_compare = pd.DataFrame({"DATE":val_date, 'ACTUAL_PRICE': validation_gspc_px, 'PREDICTED_PRICE': val_pcr_pred.flatten()})
-print("# -- Validation Results - Comprare: PCR Variables -- #")
-print(df_val_pcr_compare.tail(10))
-print("##########################################################")
-print("##########################################################")
-# -- Plot Predictions against Actual Prices:
-plt.figure()
-plot1, = plt.plot([i for i in range(0,len(df_val_pcr_compare.index))], df_val_pcr_compare['ACTUAL_PRICE'])
-plot2, = plt.plot([i for i in range(0,len(df_val_pcr_compare.index))], df_val_pcr_compare['PREDICTED_PRICE'])
-plt.xlabel('Number of days before April 16th 2020')
-plt.ylabel('Price of S&P500')
-plt.title('Time Series - Compairson of Actual vs Predicted Prices')
-plt.legend((plot1, plot2), ('S&P500 - Actual', 'S&P500 - Predicted'))
-plt.show()
-
-print("##########################################################")
-print("##########################################################")
 
 
